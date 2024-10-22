@@ -216,8 +216,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <img src="imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
-                    <h1>FITNESS GYM-TINA</h1>
+                <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">                    <h1>FITNESS GYM-TINA</h1>
                 </div>
                 <nav>
                     <ul>
