@@ -1,10 +1,43 @@
+<?php
+session_start();
+include 'db_connection.php';
+
+$error_message = "";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $admin_id = $_POST['username'];
+    $password = $_POST['password'];
+
+    $sql = "SELECT * FROM administradores WHERE admin_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $admin_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 1) {
+        $row = $result->fetch_assoc();
+        if (password_verify($password, $row['password'])) {
+            $_SESSION['admin_id'] = $row['admin_id'];
+            header("Location: administradores.php");
+            exit();
+        } else {
+            $error_message = "Usuario o contraseña incorrecta";
+        }
+    } else {
+        $error_message = "Usuario o contraseña incorrecta";
+    }
+
+    $stmt->close();
+    $conn->close();
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Fitness Gym-Tina</title>
-    <link rel="icon" href="imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
+    <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
 
     <style>
         * {
@@ -136,6 +169,12 @@
             color: #f472b6;
         }
 
+        .error-message {
+            color: #ff0000;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
         @keyframes animate {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -179,7 +218,12 @@
         <i style="--clr:#d0ff00;"></i>
         <div class="login">
             <h2>Iniciar Sesión</h2>
-            <form action="administradores.php" method="POST">
+            <?php
+            if (!empty($error_message)) {
+                echo "<p class='error-message'>{$error_message}</p>";
+            }
+            ?>
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
                 <div class="inputBx">
                     <input type="text" placeholder="Usuario" name="username" required> 
                 </div>

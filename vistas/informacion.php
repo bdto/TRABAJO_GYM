@@ -279,8 +279,8 @@
                         </div>
                     </div>
                     <div class="image-gallery">
-                        <img src="imagenes/WhatsApp Image 2024-10-16 at 8.02.47 PM.jpeg" alt="Gym Image 1" class="gallery-image active">
-                        <img src="imagenes/WhatsApp Image 2024-10-16 at 8.02.46 PM (2).jpeg" alt="Gym Image 2" class="gallery-image">
+                        <img src="../imagenes/ Image 2024-10-16 at 8.02.47 PM.jpeg" alt="Gym Image 1" class="gallery-image active">
+                        <img src="../imagenes/ Image 2024-10-16 at 8.02.46 PM (2).jpeg" alt="Gym Image 2" class="gallery-image">
                     </div>
                 </div>
             </div>

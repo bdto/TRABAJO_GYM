@@ -1,11 +1,42 @@
+<?php
+// Use __DIR__ to get the current directory and construct the path to db_connection.php
+$db_connection_path = __DIR__ . '/../db_connection.php';
+
+// Check if the file exists before including it
+if (file_exists($db_connection_path)) {
+    include $db_connection_path;
+} else {
+    die("Error: db_connection.php file not found. Path: " . $db_connection_path);
+}
+
+$message = '';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $admin_id = $_POST['admin_id'];
+    $nombre = $_POST['nombre'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
+    $sql = "INSERT INTO administradores (admin_id, nombre, password) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sss", $admin_id, $nombre, $password);
+
+    if ($stmt->execute()) {
+        $message = "Registro exitoso";
+    } else {
+        $message = "Error: " . $stmt->error;
+    }
+
+    $stmt->close();
+    $conn->close();
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GYM-TINA - Registro</title>
-    <link rel="icon" href="imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
-
+    <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <style>
         :root {
             --primary-color: #ff007398;
@@ -190,6 +221,25 @@
             display: none;
         }
 
+        .message {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
         @media (max-width: 768px) {
             nav ul {
                 display: none;
@@ -226,7 +276,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <img src="imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
+                    <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
                     <h1>GYM-TINA</h1>
                 </div>
                 <nav>
@@ -246,7 +296,13 @@
     <main>
         <div class="signup-card">
             <h2>Registro</h2>
-            <form>
+            <?php
+            if (!empty($message)) {
+                $messageClass = strpos($message, 'Error') !== false ? 'error' : 'success';
+                echo "<div class='message {$messageClass}'>{$message}</div>";
+            }
+            ?>
+            <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                 <div class="form-group">
                     <label for="admin_id">ID de Administrador</label>
                     <input type="text" id="admin_id" name="admin_id" required>
