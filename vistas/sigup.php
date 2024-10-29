@@ -3,8 +3,8 @@ require_once '../modelo/conexion.php';
 require_once '../modelo/usuario.php';    
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $db = (new Conexion())->getConection();
-
+    $db = (new Conexion())->getConnection();  
+    
     $usuario = new Usuario($db);
 
    

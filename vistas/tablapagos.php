@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabla de Pagos - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
-
     <style>
         :root {
             --primary-color: #db2777;
@@ -190,7 +189,7 @@
             }
 
             .search-container {
-                flex-direction: column;
+                flex-direction:  column;
             }
 
             .search-input, .btn {
@@ -204,7 +203,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">                    <h1>FITNESS GYM-TINA</h1>
+                    <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
                     <h1>FITNESS GYM-TINA</h1>
                 </div>
                 <nav>
@@ -230,22 +229,22 @@
                 <table id="tablaPagos">
                     <thead>
                         <tr>
-                            <th>ID Pago</th>
+                            <th>ID Pagos</th>
+                            <th>ID Cliente</th>
+                            <th>ID Admin</th>
                             <th>Tipo de Subscripción</th>
                             <th>Precio</th>
                             <th>Duración</th>
-                            <th>Medio de Pago</th>
                             <th>Estado</th>
-                            <th>Fecha</th>
                         </tr>
                     </thead>
                     <tbody>
-                      
+                        <!-- Table body will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
             <div class="pagination" id="pagination">
-               
+                <!-- Pagination will be populated by JavaScript -->
             </div>
         </div>
     </main>
@@ -264,13 +263,13 @@
             paginatedItems.forEach(pago => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${pago.id_pago}</td>
+                    <td>${pago.id_pagos}</td>
+                    <td>${pago.id_cliente}</td>
+                    <td>${pago.id_admin}</td>
                     <td>${pago.tipo_subscripcion}</td>
                     <td>${pago.precio}</td>
                     <td>${pago.duracion}</td>
-                    <td>${pago.medio_pago}</td>
                     <td>${pago.estado}</td>
-                    <td>${pago.fecha}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -294,7 +293,6 @@
             const filtro = document.getElementById('filtro').value.toLowerCase();
             pagosFiltrados = pagos.filter(pago => 
                 pago.tipo_subscripcion.toLowerCase().includes(filtro) ||
-                pago.medio_pago.toLowerCase().includes(filtro) ||
                 pago.estado.toLowerCase().includes(filtro)
             );
             mostrarPagos(1);
@@ -302,9 +300,9 @@
 
         const exportarExcel = () => {
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "ID Pago,Tipo de Subscripción,Precio,Duración,Medio de Pago,Estado,Fecha\n";
+            csvContent += "ID Pagos,ID Cliente,ID Admin,Tipo de Subscripción,Precio,Duración,Estado\n";
             pagosFiltrados.forEach(pago => {
-                csvContent += `${pago.id_pago},${pago.tipo_subscripcion},${pago.precio},${pago.duracion},${pago.medio_pago},${pago.estado},${pago.fecha}\n`;
+                csvContent += `${pago.id_pagos},${pago.id_cliente},${pago.id_admin},${pago.tipo_subscripcion},${pago.precio},${pago.duracion},${pago.estado}\n`;
             });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
@@ -317,7 +315,6 @@
 
         mostrarPagos();
 
-     
         document.getElementById('filtro').addEventListener('input', filtrarTabla);
     </script>
 </body>

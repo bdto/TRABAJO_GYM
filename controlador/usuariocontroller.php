@@ -5,12 +5,11 @@ include_once '../modelo/conexion.php';
 include_once '../modelo/usuario.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $db = (new Conexion())->getConection();  
+    $db = (new Conexion())->getConnection();  
     $usuario = new Usuario($db);
 
     $usuario->usuario = $_POST['usuario'];
     $usuario->password = $_POST['password'];
-    
     
     $resultado = $usuario->validarUsuario();
 

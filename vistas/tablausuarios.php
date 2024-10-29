@@ -124,7 +124,6 @@
         .btn {
             background-color: var(--primary-color);
             color: #fff;
-            
             border: none;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
@@ -193,7 +192,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">                    <h1>FITNESS GYM-TINA</h1>
+                    <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
                     <h1>FITNESS GYM-TINA</h1>
                 </div>
                 <nav>
@@ -223,7 +222,6 @@
                         <thead>
                             <tr>
                                 <th>ID Cliente</th>
-                                <th>ID Admin</th>
                                 <th>Nombre</th>
                                 <th>Apellido</th>
                                 <th>Teléfono</th>
@@ -257,13 +255,12 @@
         usuariosFiltrados.forEach(function(usuario) {
             let tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${usuario.idCliente}</td>
-                <td>${usuario.idAdmin}</td>
+                <td>${usuario.id_cliente}</td>
                 <td>${usuario.nombre}</td>
                 <td>${usuario.apellido}</td>
                 <td>${usuario.telefono}</td>
                 <td>${usuario.genero}</td>
-                <td>${usuario.fechaRegistro}</td>
+                <td>${usuario.f_registro}</td>
                 <td>${usuario.estado}</td>
             `;
             tbody.appendChild(tr);
@@ -281,9 +278,9 @@
 
     function exportarExcel() {
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "ID Cliente,ID Admin,Nombre,Apellido,Teléfono,Género,Fecha de Registro,Estado\n";
+        csvContent += "ID Cliente,Nombre,Apellido,Teléfono,Género,Fecha de Registro,Estado\n";
         usuariosFiltrados.forEach(usuario => {
-            csvContent += `${usuario.idCliente},${usuario.idAdmin},${usuario.nombre},${usuario.apellido},${usuario.telefono},${usuario.genero},${usuario.fechaRegistro},${usuario.estado}\n`;
+            csvContent += `${usuario.id_cliente},${usuario.nombre},${usuario.apellido},${usuario.telefono},${usuario.genero},${usuario.f_registro},${usuario.estado}\n`;
         });
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");

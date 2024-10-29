@@ -74,6 +74,7 @@
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
             transition: background-color 0.3s, transform 0.2s;
+        
         }
 
         nav a:hover {
@@ -216,7 +217,8 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">                    <h1>FITNESS GYM-TINA</h1>
+                    <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
+                    <h1>FITNESS GYM-TINA</h1>
                 </div>
                 <nav>
                     <ul>
@@ -239,8 +241,16 @@
                 <form id="paymentForm">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="id_pago">ID Pago:</label>
-                            <input type="text" id="id_pago" name="id_pago" required readonly value="AUTO_INCREMENT">
+                            <label for="id_pagos">ID Pagos:</label>
+                            <input type="text" id="id_pagos" name="id_pagos" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_cliente">ID Cliente:</label>
+                            <input type="text" id="id_cliente" name="id_cliente" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_admin">ID Admin:</label>
+                            <input type="text" id="id_admin" name="id_admin" required>
                         </div>
                         <div class="form-group">
                             <label for="tipo_subscripcion">Tipo de Subscripción:</label>
@@ -261,24 +271,12 @@
                             <input type="text" id="duracion" name="duracion" readonly>
                         </div>
                         <div class="form-group">
-                            <label for="medio_pago">Medio de Pago:</label>
-                            <select id="medio_pago" name="medio_pago" required>
-                                <option value="">Seleccionar</option>
-                                <option value="efectivo">Efectivo</option>
-                                <option value="transferencia">Transferencia</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
                             <label for="estado">Estado:</label>
                             <select id="estado" name="estado" required>
                                 <option value="">Seleccionar</option>
                                 <option value="pagado">Pagado</option>
                                 <option value="pendiente">Pendiente</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="fecha">Fecha:</label>
-                            <input type="date" id="fecha" name="fecha" required>
                         </div>
                     </div>
                     <button type="submit">Registrar Pago</button>
@@ -322,53 +320,63 @@
             quincenal: { precio: 40000, duracion: '15 días' }
         };
 
-        document.getElementById('tipo_subscripcion').addEventListener('change', function() {
-            const selectedType = this.value;
-            const data = subscriptionData[selectedType];
-            if (data) {
-                document.getElementById('precio').value = data.precio;
-                document.getElementById('duracion').value = data.duracion;
-            } else {
-                document.getElementById('precio').value = '';
-                document.getElementById('duracion').value = '';
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('paymentForm');
+            const idPagosInput = document.getElementById('id_pagos');
+            const tipoSubscripcionSelect = document.getElementById('tipo_subscripcion');
+            const precioInput = document.getElementById('precio');
+            const duracionInput = document.getElementById('duracion');
+
+            // Load existing payments and set initial ID
+            let pagos = JSON.parse(localStorage.getItem('pagos')) || [];
+            idPagosInput.value = pagos.length > 0 ? Math.max(...pagos.map(p => parseInt(p.id_pagos))) + 1 : 1;
+
+            updateStats();
+
+            tipoSubscripcionSelect.addEventListener('change', function() {
+                const selectedType = this.value;
+                const data = subscriptionData[selectedType];
+                if (data) {
+                    precioInput.value = data.precio;
+                    duracionInput.value = data.duracion;
+                } else {
+                    precioInput.value = '';
+                    duracionInput.value = '';
+                }
+            });
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const newPayment = Object.fromEntries(formData.entries());
+
+                // Add new payment
+                pagos.push(newPayment);
+                localStorage.setItem('pagos', JSON.stringify(pagos));
+
+                // Update stats
+                updateStats();
+
+                // Reset form and increment ID
+                form.reset();
+                idPagosInput.value = parseInt(idPagosInput.value) + 1;
+
+                alert('Pago registrado exitosamente.');
+            });
+
+            function updateStats() {
+                const totalRecaudado = pagos.reduce((total, pago) => total + Number(pago.precio), 0);
+                const currentDate = new Date();
+                const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const pagosMes = pagos.filter(pago => new Date(pago.fecha) >= firstDayOfMonth).length;
+                const pagosPendientes = pagos.filter(pago => pago.estado === 'pendiente').length;
+
+                document.getElementById('totalRecaudado').textContent = `$${totalRecaudado.toLocaleString()}`;
+                document.getElementById('pagosMes').textContent = pagosMes;
+                document.getElementById('pagosPendientes').textContent = pagosPendientes;
             }
         });
-
-        document.getElementById('paymentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const payment = Object.fromEntries(formData.entries());
-            payment.id_pago = Date.now().toString(); 
-            payment.fecha = new Date().toISOString().split('T')[0]; 
-
-            let pagos = JSON.parse(localStorage.getItem('pagos')) || [];
-            pagos.push(payment);
-            localStorage.setItem('pagos', JSON.stringify(pagos));
-
-            alert('Pago registrado con éxito');
-            this.reset();
-            updateStats();
-        });
-
-        function updateStats() {
-            const pagos = JSON.parse(localStorage.getItem('pagos')) || [];
-            const currentDate = new Date();
-            const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-
-            const totalRecaudado = pagos.reduce((total, pago) => total + Number(pago.precio), 0);
-            const pagosMes = pagos.filter(pago => new Date(pago.fecha) >= firstDayOfMonth).length;
-            const pagosPendientes = pagos.filter(pago => pago.estado === 'pendiente').length;
-
-            document.getElementById('totalRecaudado').textContent = `$${totalRecaudado.toLocaleString()}`;
-            document.getElementById('pagosMes').textContent = pagosMes;
-            document.getElementById('pagosPendientes').textContent = pagosPendientes;
-        }
-
-        
-        document.getElementById('fecha').valueAsDate = new Date();
-
-        
-        window.onload = updateStats;
     </script>
 </body>
 </html>

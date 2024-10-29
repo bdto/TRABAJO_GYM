@@ -208,7 +208,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <img src="imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
+                    <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
                     <h1>FITNESS GYM-TINA</h1>
                 </div>
                 <nav>
@@ -236,10 +236,6 @@
                             <input type="text" id="id_cliente" name="id_cliente" required readonly>
                         </div>
                         <div class="form-group">
-                            <label for="id_admin">ID Admin:</label>
-                            <input type="text" id="id_admin" name="id_admin" required>
-                        </div>
-                        <div class="form-group">
                             <label for="nombre">Nombre:</label>
                             <input type="text" id="nombre" name="nombre" required>
                         </div>
@@ -261,8 +257,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="fecha_registro">Fecha de Registro:</label>
-                            <input type="date" id="fecha_registro" name="fecha_registro" required>
+                            <label for="f_registro">Fecha de Registro:</label>
+                            <input type="date" id="f_registro" name="f_registro" required>
                         </div>
                         <div class="form-group">
                             <label for="estado">Estado:</label>
@@ -289,17 +285,17 @@
             </div>
             <div class="stat-card">
                 <div class="stat-header bg-green">
-                    <span>💳 Pagos al Día</span>
+                    <span>✅ Usuarios Activos</span>
                 </div>
-                <div class="stat-content" id="pagosAlDia">
+                <div class="stat-content" id="usuariosActivos">
                     0
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-header bg-red">
-                    <span>⚠️ Pagos Pendientes</span>
+                    <span>❌ Usuarios Inactivos</span>
                 </div>
-                <div class="stat-content" id="pagosPendientes">
+                <div class="stat-content" id="usuariosInactivos">
                     0
                 </div>
             </div>
@@ -311,12 +307,13 @@
             const form = document.getElementById('userForm');
             const idClienteInput = document.getElementById('id_cliente');
             const totalUsuariosElement = document.getElementById('totalUsuarios');
+            const usuariosActivosElement = document.getElementById('usuariosActivos');
+            const usuariosInactivosElement = document.getElementById('usuariosInactivos');
 
-            // Load existing users and set initial ID
             let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
             idClienteInput.value = usuarios.length > 0 ? Math.max(...usuarios.map(u => parseInt(u.id_cliente))) + 1 : 1;
 
-            totalUsuariosElement.textContent = usuarios.length;
+            updateStats();
 
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -324,12 +321,11 @@
                 const formData = new FormData(form);
                 const newUser = Object.fromEntries(formData.entries());
 
-               
+                // Check for duplicate users
                 const isDuplicate = usuarios.some(usuario => 
                     usuario.nombre === newUser.nombre &&
                     usuario.apellido === newUser.apellido &&
-                    usuario.telefono === newUser.telefono &&
-                    usuario.genero === newUser.genero
+                    usuario.telefono === newUser.telefono
                 );
 
                 if (isDuplicate) {
@@ -337,19 +333,25 @@
                     return;
                 }
 
-              
+               
                 usuarios.push(newUser);
                 localStorage.setItem('usuarios', JSON.stringify(usuarios));
 
-                
-                totalUsuariosElement.textContent = usuarios.length;
+               
+                updateStats();
 
-             
+               
                 form.reset();
                 idClienteInput.value = parseInt(idClienteInput.value) + 1;
 
                 alert('Usuario registrado exitosamente.');
             });
+
+            function updateStats() {
+                totalUsuariosElement.textContent = usuarios.length;
+                usuariosActivosElement.textContent = usuarios.filter(u => u.estado === 'activo').length;
+                usuariosInactivosElement.textContent = usuarios.filter(u => u.estado === 'inactivo').length;
+            }
         });
     </script>
 </body>
