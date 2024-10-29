@@ -1,33 +1,23 @@
 <?php
-// Use __DIR__ to get the current directory and construct the path to db_connection.php
-$db_connection_path = __DIR__ . '/../db_connection.php';
+require_once '../modelo/conexion.php';  
+require_once '../modelo/usuario.php';    
 
-// Check if the file exists before including it
-if (file_exists($db_connection_path)) {
-    include $db_connection_path;
-} else {
-    die("Error: db_connection.php file not found. Path: " . $db_connection_path);
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $db = (new Conexion())->getConection();
 
-$message = '';
+    $usuario = new Usuario($db);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $admin_id = $_POST['admin_id'];
-    $nombre = $_POST['nombre'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+   
+    $usuario->id = $_POST['id'];                     
+    $usuario->usuario = $_POST['usuario'];           
+    $usuario->password = password_hash($_POST['password'], PASSWORD_BCRYPT); 
 
-    $sql = "INSERT INTO administradores (admin_id, nombre, password) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sss", $admin_id, $nombre, $password);
-
-    if ($stmt->execute()) {
-        $message = "Registro exitoso";
+    
+    if ($usuario->registrarUsuario()) {
+        echo "<p>Registro exitoso. <a href='login.php'>Iniciar sesión</a></p>";
     } else {
-        $message = "Error: " . $stmt->error;
+        echo "<p>Error al registrar usuario. Inténtalo de nuevo.</p>";
     }
-
-    $stmt->close();
-    $conn->close();
 }
 ?>
 <!DOCTYPE html>
@@ -327,7 +317,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.getElementById('menu-toggle');
-            const nav = document.querySelector('nav');
+            const nav = 
+
+ document.querySelector('nav');
             menuToggle.addEventListener('click', () => {
                 nav.classList.toggle('active');
             });

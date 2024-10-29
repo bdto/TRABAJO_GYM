@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabla de Usuarios - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
-
     <style>
         :root {
             --primary-color: #db2777;
@@ -15,6 +14,7 @@
             --text-color: #1f2937;
             --card-background: #ffffff;
             --border-color: #e5e7eb;
+            --hover-color: #f9fafb;
         }
 
         * {
@@ -110,28 +110,31 @@
         .search-container {
             display: flex;
             margin-bottom: 1rem;
+            gap: 1rem;
         }
 
         .search-input {
             flex-grow: 1;
             padding: 0.5rem;
             border: 1px solid var(--border-color);
-            border-radius: 0.25rem 0 0 0.25rem;
+            border-radius: 0.25rem;
             font-size: 1rem;
         }
 
-        .search-button {
+        .btn {
             background-color: var(--primary-color);
             color: #fff;
+            
             border: none;
             padding: 0.5rem 1rem;
-            border-radius: 0 0.25rem 0.25rem 0;
+            border-radius: 0.25rem;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.2s;
         }
 
-        .search-button:hover {
+        .btn:hover {
             background-color: var(--primary-dark);
+            transform: translateY(-2px);
         }
 
         .table-container {
@@ -151,12 +154,13 @@
         }
 
         th {
-            background-color: #f9fafb;
+            background-color: var(--hover-color);
             font-weight: bold;
+            color: var(--primary-color);
         }
 
         tr:hover {
-            background-color: #f3f4f6;
+            background-color: var(--hover-color);
         }
 
         @media (max-width: 768px) {
@@ -178,13 +182,8 @@
                 flex-direction: column;
             }
 
-            .search-input, .search-button {
+            .search-input, .btn {
                 width: 100%;
-                border-radius: 0.25rem;
-            }
-
-            .search-button {
-                margin-top: 0.5rem;
             }
         }
     </style>
@@ -194,7 +193,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <img src="imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">
+                <img src="../imagenes/WhatsApp Image 2024-10-13 at 10.26.18 PM.jpeg" alt="GYM TINA Logo">                    <h1>FITNESS GYM-TINA</h1>
                     <h1>FITNESS GYM-TINA</h1>
                 </div>
                 <nav>
@@ -216,7 +215,8 @@
             <div class="card-content">
                 <div class="search-container">
                     <input type="text" id="filtro" class="search-input" placeholder="Buscar por nombre...">
-                    <button onclick="filtrarTabla()" class="search-button">Buscar</button>
+                    <button onclick="filtrarTabla()" class="btn">Buscar</button>
+                    <button onclick="exportarExcel()" class="btn">Exportar a Excel</button>
                 </div>
                 <div class="table-container">
                     <table id="tablaUsuarios">
@@ -242,11 +242,19 @@
     </main>
 
     <script>
-    window.onload = function() {
-        let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-        let tbody = document.querySelector('#tablaUsuarios tbody');
+    let usuarios = [];
+    let usuariosFiltrados = [];
 
-        usuarios.forEach(function(usuario) {
+    window.onload = function() {
+        usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+        usuariosFiltrados = [...usuarios];
+        mostrarUsuarios();
+    };
+
+    function mostrarUsuarios() {
+        let tbody = document.querySelector('#tablaUsuarios tbody');
+        tbody.innerHTML = '';
+        usuariosFiltrados.forEach(function(usuario) {
             let tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${usuario.idCliente}</td>
@@ -260,22 +268,33 @@
             `;
             tbody.appendChild(tr);
         });
-    };
+    }
 
     function filtrarTabla() {
-        let input = document.getElementById('filtro');
-        let filter = input.value.toUpperCase();
-        let table = document.getElementById('tablaUsuarios');
-        let tr = table.getElementsByTagName('tr');
-
-        for (let i = 1; i < tr.length; i++) {
-            let td = tr[i].getElementsByTagName('td')[2]; 
-            if (td) {
-                let textValue = td.textContent || td.innerText;
-                tr[i].style.display = textValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-            }
-        }
+        let filtro = document.getElementById('filtro').value.toLowerCase();
+        usuariosFiltrados = usuarios.filter(usuario => 
+            usuario.nombre.toLowerCase().includes(filtro) ||
+            usuario.apellido.toLowerCase().includes(filtro)
+        );
+        mostrarUsuarios();
     }
+
+    function exportarExcel() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "ID Cliente,ID Admin,Nombre,Apellido,Teléfono,Género,Fecha de Registro,Estado\n";
+        usuariosFiltrados.forEach(usuario => {
+            csvContent += `${usuario.idCliente},${usuario.idAdmin},${usuario.nombre},${usuario.apellido},${usuario.telefono},${usuario.genero},${usuario.fechaRegistro},${usuario.estado}\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "usuarios_gym_tina.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    document.getElementById('filtro').addEventListener('input', filtrarTabla);
     </script>
 </body>
 </html>

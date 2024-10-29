@@ -1,15 +1,4 @@
-<?php
-session_start();
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: login.php");
-    exit();
-}
 
-include 'db_connection.php';
-
-$sql = "SELECT id, admin_id, nombre FROM administradores";
-$result = $conn->query($sql);
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,7 +6,6 @@ $result = $conn->query($sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabla de Administradores - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
-
     <style>
         :root {
             --primary-color: #1a202c;
@@ -123,12 +111,12 @@ $result = $conn->query($sql);
             </thead>
             <tbody>
                 <?php
-                if ($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
+                if (!empty($_SESSION['administrators'])) {
+                    foreach ($_SESSION['administrators'] as $index => $admin) {
                         echo "<tr>
-                                <td>".$row["id"]."</td>
-                                <td>".$row["admin_id"]."</td>
-                                <td>".$row["nombre"]."</td>
+                                <td>".($index + 1)."</td>
+                                <td>".$admin['admin_id']."</td>
+                                <td>".$admin['nombre']."</td>
                               </tr>";
                     }
                 } else {
@@ -140,6 +128,3 @@ $result = $conn->query($sql);
     </div>
 </body>
 </html>
-<?php
-$conn->close();
-?>

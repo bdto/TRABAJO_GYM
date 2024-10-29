@@ -337,7 +337,7 @@
                 </div>
                 <nav id="main-nav">
                     <ul>
-                        <li><a href="dashboard.php">Inicio</a></li>
+                        <li><a href="index.php">Inicio</a></li>
                         <li><a href="informacion.php">Nosotros</a></li>
                         <li><a href="servicios.php">Servicios</a></li>
                         <li><a href="contacto.php">Contacto</a></li>

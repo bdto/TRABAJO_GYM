@@ -1,36 +1,3 @@
-<?php
-session_start();
-include 'db_connection.php';
-
-$error_message = "";
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $admin_id = $_POST['username'];
-    $password = $_POST['password'];
-
-    $sql = "SELECT * FROM administradores WHERE admin_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $admin_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows == 1) {
-        $row = $result->fetch_assoc();
-        if (password_verify($password, $row['password'])) {
-            $_SESSION['admin_id'] = $row['admin_id'];
-            header("Location: administradores.php");
-            exit();
-        } else {
-            $error_message = "Usuario o contraseña incorrecta";
-        }
-    } else {
-        $error_message = "Usuario o contraseña incorrecta";
-    }
-
-    $stmt->close();
-    $conn->close();
-}
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -38,7 +5,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
-
     <style>
         * {
             margin: 0;
@@ -237,7 +203,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="links">
                 <a href="#">¿Olvidaste tu contraseña?</a>
                 <a href="sigup.php">Registrarse</a>
-                <a href="dashboard.php">Inicio</a> 
+                <a href="index.php">Inicio</a> 
             </div>
         </div>
     </div>
