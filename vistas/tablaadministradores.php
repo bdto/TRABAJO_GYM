@@ -1,4 +1,6 @@
-
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -107,20 +109,26 @@
                     <th>ID</th>
                     <th>Admin ID</th>
                     <th>Nombre</th>
+                    <th>Contraseña</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                if (!empty($_SESSION['administrators'])) {
+                if (isset($_SESSION['administrators']) && !empty($_SESSION['administrators'])) {
                     foreach ($_SESSION['administrators'] as $index => $admin) {
                         echo "<tr>
                                 <td>".($index + 1)."</td>
                                 <td>".$admin['admin_id']."</td>
                                 <td>".$admin['nombre']."</td>
+                                <td>".
+                                    (isset($admin['plain_password']) 
+                                        ? $admin['plain_password'] 
+                                        : 'No disponible')
+                                ."</td>
                               </tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='3' class='no-data'>No hay administradores registrados</td></tr>";
+                    echo "<tr><td colspan='4' class='no-data'>No hay administradores registrados</td></tr>";
                 }
                 ?>
             </tbody>

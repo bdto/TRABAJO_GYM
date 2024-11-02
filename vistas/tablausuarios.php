@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabla de Usuarios - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
-    <style>
+ <style>
         :root {
             --primary-color: #db2777;
             --primary-dark: #be185d;
@@ -85,7 +85,7 @@
         }
 
         .card {
-            background-color: var(--card-background);
+            background-color:  var(--card-background);
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
@@ -239,7 +239,7 @@
         </div>
     </main>
 
-    <script>
+<script>
     let usuarios = [];
     let usuariosFiltrados = [];
 

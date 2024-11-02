@@ -5,15 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuarios - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
-
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #f472b6;
+            --accent-color: #db2777;
             --text-color: #333;
             --background-color: #f5f5f5;
             --card-background: #ffffff;
             --border-color: #e5e7eb;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --danger-color: #e53e3e;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s ease;
         }
 
         * {
@@ -23,7 +29,7 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
             line-height: 1.6;
             color: var(--text-color);
             background-color: var(--background-color);
@@ -39,7 +45,10 @@
             background-color: var(--primary-color);
             color: #fff;
             padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .header-content {
@@ -58,6 +67,20 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--secondary-color);
+            transition: var(--transition);
+        }
+
+        .logo img:hover {
+            transform: scale(1.1);
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         nav ul {
@@ -71,12 +94,16 @@
             text-decoration: none;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         nav a:hover {
             background-color: var(--secondary-color);
             color: var(--primary-color);
+            transform: translateY(-2px);
         }
 
         main {
@@ -85,106 +112,134 @@
 
         .card {
             background-color: var(--card-background);
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
             margin-bottom: 2rem;
             overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .card-header {
             background-color: var(--secondary-color);
             color: var(--primary-color);
-            padding: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
         .card-title {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: bold;
         }
 
         .card-content {
-            padding: 1rem;
+            padding: 2rem;
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
         }
 
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: bold;
+            color: var(--primary-color);
         }
 
         input, select {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.25rem;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
             font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2);
         }
 
         button {
-            background-color: var(--primary-color);
+            background-color: var(--accent-color);
             color: #fff;
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 2rem;
             border: none;
-            border-radius: 0.25rem;
+            border-radius: 0.5rem;
             font-size: 1rem;
+            font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            display: block;
-            margin: 1rem auto 0;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem auto 0;
+            width: 100%;
+            max-width: 300px;
         }
 
         button:hover {
             background-color: var(--secondary-color);
-            color: var(--primary-color);
             transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
+            gap: 2rem;
+            margin-top: 3rem;
         }
 
         .stat-card {
             background-color: var(--card-background);
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
             overflow: hidden;
-            transition: transform 0.3s;
+            transition: var(--transition);
         }
 
         .stat-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .stat-header {
-            padding: 1rem;
+            padding: 1.5rem;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
         }
 
         .stat-content {
-            padding: 1rem;
+            padding: 2rem;
             text-align: center;
-            font-size: 2rem;
+            font-size: 3rem;
             font-weight: bold;
+            color: var(--primary-color);
         }
 
-        .bg-blue { background-color: #3498db; color: #fff; }
-        .bg-green { background-color: #2ecc71; color: #fff; }
-        .bg-red { background-color: #e74c3c; color: #fff; }
+        .bg-blue { background-color: var(--accent-color); color: #fff; }
+        .bg-green { background-color: var(--success-color); color: #fff; }
+        .bg-red { background-color: var(--danger-color); color: #fff; }
 
         @media (max-width: 768px) {
             .header-content {
@@ -200,6 +255,10 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
+
+            .stat-card {
+                min-height: 200px;
+            }
         }
     </style>
 </head>
@@ -213,10 +272,10 @@
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="usuarios.php">Usuarios</a></li>
-                        <li><a href="pagos.php">Pagos</a></li>
-                        <li><a href="administradores.php">Administradores</a></li>
-                        <li><a href="tablausuarios.php">Tabla Usuarios</a></li>
+                        <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
+                        <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
+                        <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Administradores</a></li>
+                        <li><a href="tablausuarios.php"><i class="fas fa-table"></i> Tabla Usuarios</a></li>
                     </ul>
                 </nav>
             </div>
@@ -226,6 +285,7 @@
     <main class="container">
         <div class="card">
             <div class="card-header">
+                <i class="fas fa-user-plus fa-2x"></i>
                 <h2 class="card-title">Registrar Usuario</h2>
             </div>
             <div class="card-content">
@@ -269,7 +329,7 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit">Registrar Usuario</button>
+                    <button type="submit"><i class="fas fa-save"></i> Registrar Usuario</button>
                 </form>
             </div>
         </div>
@@ -277,7 +337,8 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-header bg-blue">
-                    <span>👥 Total Usuarios</span>
+                    <i class="fas fa-users fa-lg"></i>
+                    <span>Total Usuarios</span>
                 </div>
                 <div class="stat-content" id="totalUsuarios">
                     0
@@ -285,7 +346,8 @@
             </div>
             <div class="stat-card">
                 <div class="stat-header bg-green">
-                    <span>✅ Usuarios Activos</span>
+                    <i class="fas fa-user-check fa-lg"></i>
+                    <span>Usuarios Activos</span>
                 </div>
                 <div class="stat-content" id="usuariosActivos">
                     0
@@ -293,7 +355,8 @@
             </div>
             <div class="stat-card">
                 <div class="stat-header bg-red">
-                    <span>❌ Usuarios Inactivos</span>
+                    <i class="fas fa-user-times fa-lg"></i>
+                    <span>Usuarios Inactivos</span>
                 </div>
                 <div class="stat-content" id="usuariosInactivos">
                     0
@@ -302,7 +365,7 @@
         </div>
     </main>
 
-    <script>
+<script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('userForm');
             const idClienteInput = document.getElementById('id_cliente');
@@ -321,7 +384,6 @@
                 const formData = new FormData(form);
                 const newUser = Object.fromEntries(formData.entries());
 
-                // Check for duplicate users
                 const isDuplicate = usuarios.some(usuario => 
                     usuario.nombre === newUser.nombre &&
                     usuario.apellido === newUser.apellido &&
@@ -333,14 +395,11 @@
                     return;
                 }
 
-               
                 usuarios.push(newUser);
                 localStorage.setItem('usuarios', JSON.stringify(usuarios));
 
-               
                 updateStats();
 
-               
                 form.reset();
                 idClienteInput.value = parseInt(idClienteInput.value) + 1;
 
@@ -350,6 +409,7 @@
             function updateStats() {
                 totalUsuariosElement.textContent = usuarios.length;
                 usuariosActivosElement.textContent = usuarios.filter(u => u.estado === 'activo').length;
+                
                 usuariosInactivosElement.textContent = usuarios.filter(u => u.estado === 'inactivo').length;
             }
         });

@@ -1,23 +1,26 @@
 <?php
-require_once '../modelo/conexion.php';  
-require_once '../modelo/usuario.php';    
+session_start();
+
+$message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $db = (new Conexion())->getConnection();  
-    
-    $usuario = new Usuario($db);
+    $id = $_POST['id'];
+    $usuario = $_POST['usuario'];
+    $plain_password = $_POST['password'];
+    $hashed_password = password_hash($plain_password, PASSWORD_BCRYPT);
 
-   
-    $usuario->id = $_POST['id'];                     
-    $usuario->usuario = $_POST['usuario'];           
-    $usuario->password = password_hash($_POST['password'], PASSWORD_BCRYPT); 
-
-    
-    if ($usuario->registrarUsuario()) {
-        echo "<p>Registro exitoso. <a href='login.php'>Iniciar sesión</a></p>";
-    } else {
-        echo "<p>Error al registrar usuario. Inténtalo de nuevo.</p>";
+    if (!isset($_SESSION['administrators'])) {
+        $_SESSION['administrators'] = [];
     }
+
+    $_SESSION['administrators'][] = [
+        'admin_id' => $id,
+        'nombre' => $usuario,
+        'password' => $hashed_password,
+        'plain_password' => $plain_password
+    ];
+
+    $message = "<p class='success'>Registro exitoso. <a href='login.php'>Iniciar sesión</a></p>";
 }
 ?>
 <!DOCTYPE html>
@@ -27,15 +30,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GYM-TINA - Registro</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #ff007398;
-            --primary-dark: #be185d;
-            --secondary-color: #f472b6;
+            --primary-color: #e91e63;
+            --primary-dark: #c2185b;
+            --secondary-color: #ff4081;
             --background-color: #f5f5f5;
             --text-color: #333;
             --header-bg: #1a202c;
             --card-bg: #ffffff;
+            --input-bg: #f0f0f0;
+            --input-border: #d1d1d1;
+            --input-focus: #ff4081;
+            --button-hover: #ad1457;
+            --success-bg: #d4edda;
+            --success-color: #155724;
+            --error-bg: #f8d7da;
+            --error-color: #721c24;
         }
 
         * {
@@ -46,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         body, html {
             height: 100%;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Roboto', 'Arial', sans-serif;
             line-height: 1.6;
             color: var(--text-color);
             background-color: var(--background-color);
@@ -61,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: var(--header-bg);
             color: #fff;
             padding: 1rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .container {
@@ -87,12 +99,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             height: 50px;
             border-radius: 50%;
             object-fit: cover;
+            border: 2px solid var(--secondary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .logo img:hover {
+            transform: scale(1.1);
         }
 
         .logo h1 {
             font-size: 1.5rem;
             font-weight: bold;
             color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         nav ul {
@@ -106,24 +125,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: none;
             transition: color 0.3s;
             font-weight: 500;
+            position: relative;
         }
 
-        nav a:hover {
-            color: var(--secondary-color);
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--secondary-color);
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover::after {
+            width: 100%;
         }
 
         .login-btn {
             background-color: var(--primary-color);
             color: #fff;
             padding: 0.5rem 1rem;
-            border-radius: 9999px;
+            border-radius: 25px;
             text-decoration: none;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
             font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .login-btn:hover {
             background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
         main {
@@ -137,16 +171,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .signup-card {
             background-color: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
             padding: 2.5rem;
             width: 100%;
             max-width: 400px;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .signup-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
         }
 
         .signup-card h2 {
@@ -154,6 +189,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 2rem;
             margin-bottom: 1.5rem;
             text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .form-group {
@@ -170,16 +207,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group input {
             width: 100%;
             padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border: 2px solid var(--input-border);
+            border-radius: 25px;
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+            background-color: var(--input-bg);
         }
 
         .form-group input:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(219, 39, 119, 0.2);
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(255, 64, 129, 0.2);
         }
 
         .submit-btn {
@@ -188,16 +226,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: var(--primary-color);
             color: #fff;
             border: none;
-            border-radius: 6px;
+            border-radius: 25px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .submit-btn:hover {
-            background-color: var(--primary-dark);
+            background-color: var(--button-hover);
             transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
 
         footer {
@@ -205,28 +247,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #fff;
             text-align: center;
             padding: 1rem;
+            font-size: 0.9rem;
         }
 
         .menu-toggle {
             display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
         }
 
         .message {
             text-align: center;
             margin-bottom: 1rem;
-            padding: 0.5rem;
-            border-radius: 4px;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 500;
         }
 
         .success {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: var(--success-bg);
+            color: var(--success-color);
             border: 1px solid #c3e6cb;
         }
 
         .error {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: var(--error-bg);
+            color: var(--error-color);
             border: 1px solid #f5c6cb;
         }
 
@@ -244,6 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 right: 0;
                 background-color: var(--header-bg);
                 padding: 1rem;
+                z-index: 1000;
             }
 
             .login-btn {
@@ -252,11 +302,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             .menu-toggle {
                 display: block;
-                background: none;
-                border: none;
-                color: #fff;
-                font-size: 1.5rem;
-                cursor: pointer;
+            }
+
+            .signup-card {
+                padding: 2rem;
             }
         }
     </style>
@@ -271,41 +320,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="dashboard.php">Inicio</a></li>
-                        <li><a href="informacion.php">Sobre Nosotros</a></li>
-                        <li><a href="servicios.php">Servicios</a></li>
-                        <li><a href="contacto.php">Contacto</a></li>
+                        <li><a href="index.php"><i class="fas fa-home"></i> Inicio</a></li>
+                        <li><a href="informacion.php"><i class="fas fa-info-circle"></i> Sobre Nosotros</a></li>
+                        <li><a href="servicios.php"><i class="fas fa-dumbbell"></i> Servicios</a></li>
+                        <li><a href="contacto.php"><i class="fas fa-envelope"></i> Contacto</a></li>
                     </ul>
                 </nav>
-                <a href="login.php" class="login-btn">Login</a>
-                <button class="menu-toggle" id="menu-toggle">☰</button>
+                <a href="login.php" class="login-btn"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
             </div>
         </div>
     </header>
 
     <main>
         <div class="signup-card">
-            <h2>Registro</h2>
+            <h2><i class="fas fa-user-plus"></i> Registro</h2>
             <?php
             if (!empty($message)) {
-                $messageClass = strpos($message, 'Error') !== false ? 'error' : 'success';
-                echo "<div class='message {$messageClass}'>{$message}</div>";
+                echo $message;
             }
             ?>
             <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                 <div class="form-group">
-                    <label for="admin_id">ID de Administrador</label>
-                    <input type="text" id="admin_id" name="admin_id" required>
+                    <label for="id"><i class="fas fa-id-card"></i> ID de Administrador</label>
+                    <input type="text" id="id" name="id" required>
                 </div>
                 <div class="form-group">
-                    <label for="nombre">Nombre completo</label>
-                    <input type="text" id="nombre" name="nombre" required>
+                    <label for="usuario"><i class="fas fa-user"></i> Nombre completo</label>
+                    <input type="text" id="usuario" name="usuario" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Contraseña</label>
+                    <label for="password"><i class="fas fa-lock"></i> Contraseña</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                <button type="submit" class="submit-btn">Crear cuenta</button>
+                <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> Crear cuenta</button>
             </form>
         </div>
     </main>
@@ -317,9 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.getElementById('menu-toggle');
-            const nav = 
-
- document.querySelector('nav');
+            const nav = document.querySelector('nav');
             menuToggle.addEventListener('click', () => {
                 nav.classList.toggle('active');
             });

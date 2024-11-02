@@ -1,7 +1,7 @@
 <?php
 class Conexion {
     private $host = 'localhost';
-    private $db_name = 'mydb';
+    private $db_name = 'gym';
     private $username = 'root';
     private $password = '12345678';
     private $conn;

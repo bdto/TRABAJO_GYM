@@ -239,12 +239,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Table body will be populated by JavaScript -->
+                        <!-- contenido de la tabla -->
                     </tbody>
                 </table>
             </div>
             <div class="pagination" id="pagination">
-                <!-- Pagination will be populated by JavaScript -->
+                <!-- paginacion -->
             </div>
         </div>
     </main>
