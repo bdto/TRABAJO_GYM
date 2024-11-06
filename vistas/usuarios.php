@@ -6,7 +6,7 @@
     <title>Usuarios - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+<style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #f472b6;
@@ -40,8 +40,6 @@
             margin: 0 auto;
             padding: 0 1rem;
         }
-
-        
 
         header {
             background-color: var(--primary-color);
@@ -243,6 +241,55 @@
         .bg-green { background-color: var(--success-color); color: #fff; }
         .bg-red { background-color: var(--danger-color); color: #fff; }
 
+        /* Password protection styles */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .password-container {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .password-container h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .password-container input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .password-container button {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 1rem;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -265,6 +312,16 @@
     </style>
 </head>
 <body>
+    <div id="passwordOverlay" class="password-overlay">
+        <div class="password-container">
+            <h2>Ingrese la contraseña</h2>
+            <input type="password" id="passwordInput" placeholder="Contraseña">
+            <button id="submitPassword">Ingresar</button>
+            <p id="errorMessage" class="error-message"></p>
+            <button id="backButton" style="display: none;">Inicio</button>
+        </div>
+    </div>
+
     <header>
         <div class="container">
             <div class="header-content">
@@ -299,15 +356,15 @@
                         </div>
                         <div class="form-group">
                             <label for="nombre">Nombre:</label>
-                            <input type="text" id="nombre" name="nombre" required>
+                            <input type="text" id="nombre" name="nombre" required pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="form-group">
                             <label for="apellido">Apellido:</label>
-                            <input type="text" id="apellido" name="apellido" required>
+                            <input type="text" id="apellido" name="apellido" required pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="form-group">
                             <label for="telefono">Teléfono:</label>
-                            <input type="tel" id="telefono" name="telefono" required>
+                            <input type="tel" id="telefono" name="telefono" required pattern="[0-9]{10}" title="Debe contener exactamente 10 dígitos numéricos" maxlength="10">
                         </div>
                         <div class="form-group">
                             <label for="genero">Género:</label>
@@ -369,8 +426,18 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const passwordOverlay = document.getElementById('passwordOverlay');
+            const passwordInput = document.getElementById('passwordInput');
+            const submitPassword = document.getElementById('submitPassword');
+            const errorMessage = document.getElementById('errorMessage');
+            const backButton = document.getElementById('backButton');
+            const mainContent = document.querySelector('main');
+
             const form = document.getElementById('userForm');
             const idClienteInput = document.getElementById('id_cliente');
+            const nombreInput = document.getElementById('nombre');
+            const apellidoInput = document.getElementById('apellido');
+            const telefonoInput = document.getElementById('telefono');
             const totalUsuariosElement = document.getElementById('totalUsuarios');
             const usuariosActivosElement = document.getElementById('usuariosActivos');
             const usuariosInactivosElement = document.getElementById('usuariosInactivos');
@@ -379,6 +446,31 @@
 
             let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
             let editingUserId = null;
+
+            // Initially hide the main content
+            mainContent.style.display = 'none';
+
+            submitPassword.addEventListener('click', checkPassword);
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+
+            backButton.addEventListener('click', function() {
+                window.location.href = 'administradores.php';
+            });
+
+            function checkPassword() {
+                const password = passwordInput.value;
+                if (password === '010203') {
+                    passwordOverlay.style.display = 'none';
+                    mainContent.style.display = 'block';
+                } else {
+                    errorMessage.textContent = 'Contraseña incorrecta';
+                    backButton.style.display = 'block';
+                }
+            }
 
             // Check if we're in edit mode
             const urlParams = new URLSearchParams(window.location.search);
@@ -398,8 +490,26 @@
 
             updateStats();
 
+            // Input validations
+            nombreInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
+            });
+
+            apellidoInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
+            });
+
+            telefonoInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 10);
+            });
+
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
 
                 const formData = new FormData(form);
                 const userData = Object.fromEntries(formData.entries());

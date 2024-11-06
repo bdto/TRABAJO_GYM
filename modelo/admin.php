@@ -1,63 +1,56 @@
 <?php
-require_once 'conexion.php';  // Incluye el archivo de conexión
-
 class Admin {
     private $conn;
     public $id;
     public $usuario;
     public $password;
 
-    // Constructor que recibe la conexión a la base de datos
-    public function __construct($db) {
-        $this->conn = $db;
+    public function __construct($conn) {
+        $this->conn = $conn;
     }
 
-    // Método para validar el usuario
     public function validarUsuario() {
-        $query = "SELECT * FROM admins WHERE ID_Admin = :ID_Admin LIMIT 1";
+        $query = "SELECT * FROM admins WHERE usuario = :usuario";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':ID_Admin', $this->id);
+        $stmt->bindParam(':usuario', $this->usuario);
         $stmt->execute();
-        
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        // Verifica la contraseña
-        if ($user && password_verify($this->password, $user['password'])) {
-            return $user;
-        }
-        
-        return false;
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Método para registrar un nuevo usuario
     public function registrarUsuario() {
-        $query = "INSERT INTO admins (ID_Admin, nombre, password) VALUES (:ID_Admin, :nombre, :password)";
+        $query = "INSERT INTO admins (usuario, password) VALUES (:usuario, :password)";
         $stmt = $this->conn->prepare($query);
-
-        // Bind de los parámetros
-        $stmt->bindParam(':ID_Admin', $this->id);
-        $stmt->bindParam(':nombre', $this->usuario);
+        $stmt->bindParam(':usuario', $this->usuario);
         $stmt->bindParam(':password', $this->password);
-        
-        // Ejecuta la inserción
         return $stmt->execute();
     }
-}
 
-// Ejemplo de uso:
-$database = new Conexion();  // Instancia la conexión
-$db = $database->getConnection();  // Obtiene la conexión
+    public function obtenerTodos() {
+        $query = "SELECT * FROM admins";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-$admin = new Admin($db);  // Instancia Admin con la conexión
+    public function obtenerPorId($id) {
+        $query = "SELECT * FROM admins WHERE ID_Admin = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
-// Configura los datos del usuario
-$admin->id = 1;
-$admin->password = 'contraseña123';
-
-// Llama al método para validar el usuario
-if ($admin->validarUsuario()) {
-    echo "Usuario válido.";
-} else {
-    echo "Credenciales incorrectas.";
+    public function actualizar() {
+        $query = "UPDATE admins SET usuario = :usuario" .
+                 (!empty($this->password) ? ", password = :password" : "") .
+                 " WHERE ID_Admin = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':usuario', $this->usuario);
+        $stmt->bindParam(':id', $this->id);
+        if (!empty($this->password)) {
+            $stmt->bindParam(':password', $this->password);
+        }
+        return $stmt->execute();
+    }
 }
 ?>

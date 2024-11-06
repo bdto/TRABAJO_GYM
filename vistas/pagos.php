@@ -6,7 +6,7 @@
     <title>Pagos - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+<style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #db2777;
@@ -257,6 +257,70 @@
             margin-top: 0.25rem;
         }
 
+        /* Password popup styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .popup-content {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .popup-content h2 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .popup-content input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .popup-content button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .popup-content button:hover {
+            background-color: var(--accent-color);
+        }
+
+        #backButton {
+            margin-top: 1rem;
+            background-color: var(--primary-color);
+        }
+
+        #backButton:hover {
+            background-color: var(--accent-color);
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -279,6 +343,16 @@
     </style>
 </head>
 <body>
+    <div id="passwordPopup" class="popup-overlay">
+        <div class="popup-content">
+            <h2>Ingrese la contraseña</h2>
+            <input type="password" id="passwordInput" placeholder="Contraseña">
+            <button id="submitPassword">Ingresar</button>
+            <p id="errorMessage" class="error-message"></p>
+            <button id="backButton" style="display: none;">Inicio</button>
+        </div>
+    </div>
+
     <header>
         <div class="container">
             <div class="header-content">
@@ -308,7 +382,7 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="id_pagos">ID Pagos:</label>
-                            <input type="text" id="id_pagos" name="id_pagos" required>
+                            <input type="text" id="id_pagos" name="id_pagos" required readonly>
                         </div>
                         <div class="form-group">
                             <label for="id_cliente">ID Cliente:</label>
@@ -399,7 +473,7 @@
             const duracionInput = document.getElementById('duracion');
             const idClienteInput = document.getElementById('id_cliente');
             const idAdminInput = document.getElementById('id_admin');
-            const idClienteError =   document.getElementById('id_cliente_error');
+            const idClienteError = document.getElementById('id_cliente_error');
             const idAdminError = document.getElementById('id_admin_error');
             const formTitle = document.getElementById('formTitle');
             const submitBtn = document.getElementById('submitBtn');
@@ -407,6 +481,48 @@
 
             let pagos = JSON.parse(localStorage.getItem('pagos')) || [];
             let editingPaymentId = null;
+
+            // Password popup functionality
+            const popup = document.getElementById('passwordPopup');
+            const passwordInput = document.getElementById('passwordInput');
+            const submitPassword = document.getElementById('submitPassword');
+            const errorMessage = document.getElementById('errorMessage');
+            const backButton = document.getElementById('backButton');
+
+            function showPopup() {
+                popup.style.display = 'flex';
+            }
+
+            function hidePopup() {
+                popup.style.display = 'none';
+            }
+
+            function checkPassword() {
+                const password = passwordInput.value;
+                if (password === '010203') {
+                    hidePopup();
+                    // Show the main content
+                    document.querySelector('main').style.display = 'block';
+                } else {
+                    errorMessage.textContent = 'Lo siento, no tienes acceso a esta función';
+                    backButton.style.display = 'block';
+                }
+            }
+
+            submitPassword.addEventListener('click', checkPassword);
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+
+            backButton.addEventListener('click', function() {
+                window.location.href = 'administradores.php';
+            });
+
+            // Initially hide the main content and show the popup
+            document.querySelector('main').style.display = 'none';
+            showPopup();
 
             // Check if we're in edit mode
             const urlParams = new URLSearchParams(window.location.search);
@@ -419,11 +535,11 @@
                     editingPaymentId = paymentToEdit.id_pagos;
                     formTitle.textContent = 'Editar Pago';
                     submitBtnText.textContent = 'Actualizar Pago';
-                    idPagosInput.removeAttribute('readonly');
                 }
             } else {
-                idPagosInput.value = pagos.length > 0 ? Math.max(...pagos.map(p => parseInt(p.id_pagos))) + 1 : 1;
-                idPagosInput.setAttribute('readonly', true);
+                // Set the next available ID
+                const nextId = pagos.length > 0 ? Math.max(...pagos.map(p => parseInt(p.id_pagos) || 0)) + 1 : 1;
+                idPagosInput.value = nextId;
             }
 
             updateStats();
@@ -440,23 +556,36 @@
                 }
             });
 
+            // Add input event listeners for real-time validation
+            idClienteInput.addEventListener('input', function() {
+                validateNumericInput(this, idClienteError);
+            });
+
+            idAdminInput.addEventListener('input', function() {
+                validateNumericInput(this, idAdminError);
+            });
+
+            function validateNumericInput(input, errorElement) {
+                if (!/^\d*$/.test(input.value)) {
+                    errorElement.textContent = 'Solo se permiten números.';
+                    input.value = input.value.replace(/[^\d]/g, '');
+                } else {
+                    errorElement.textContent = '';
+                }
+            }
+
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                // Validate ID Cliente
+                // Final validation before submission
                 if (!/^\d+$/.test(idClienteInput.value)) {
-                    idClienteError.textContent = 'ID Cliente debe ser un número';
+                    idClienteError.textContent = 'ID Cliente debe ser un número entero.';
                     return;
-                } else {
-                    idClienteError.textContent = '';
                 }
 
-                // Validate ID Admin
                 if (!/^\d+$/.test(idAdminInput.value)) {
-                    idAdminError.textContent = 'ID Admin debe ser un número';
+                    idAdminError.textContent = 'ID Admin debe ser un número entero.';
                     return;
-                } else {
-                    idAdminError.textContent = '';
                 }
 
                 const formData = new FormData(form);
@@ -474,12 +603,9 @@
                 }
 
                 localStorage.setItem('pagos', JSON.stringify(pagos));
-
-                // Update stats
                 updateStats();
 
-                // Reset form and redirect
-                alert(isEditing ? 'Pago actualizado exitosamente.' : 'Pago registrado exitosamente.');
+                alert(isEditing ? 'Pago actualizado con éxito!' : 'Pago registrado con éxito!');
                 window.location.href = 'tablapagos.php';
             });
 
@@ -490,17 +616,24 @@
                         input.value = value;
                     }
                 }
+                // Trigger change event on tipo_subscripcion to update precio and duracion
+                tipoSubscripcionSelect.dispatchEvent(new Event('change'));
             }
 
             function updateStats() {
-                const totalRecaudado = pagos.reduce((total, pago) => total + Number(pago.precio), 0);
-                const currentDate = new Date();
-                const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-                const pagosMes = pagos.filter(pago => new Date(pago.fecha) >= firstDayOfMonth).length;
-                const pagosPendientes = pagos.filter(pago => pago.estado === 'pendiente').length;
+                const totalRecaudado = pagos.reduce((sum, pago) => sum + (parseInt(pago.precio) || 0), 0);
+                document.getElementById('totalRecaudado').textContent = `$${totalRecaudado}`;
 
-                document.getElementById('totalRecaudado').textContent = `$${totalRecaudado.toLocaleString()}`;
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth();
+                const currentYear = currentDate.getFullYear();
+                const pagosMes = pagos.filter(pago => {
+                    const pagoDate = new Date(pago.id_pagos); // Assuming id_pagos is a date string
+                    return !isNaN(pagoDate.getTime()) && pagoDate.getMonth() === currentMonth && pagoDate.getFullYear() === currentYear;
+                }).length;
                 document.getElementById('pagosMes').textContent = pagosMes;
+
+                const pagosPendientes = pagos.filter(pago => pago.estado === 'pendiente').length;
                 document.getElementById('pagosPendientes').textContent = pagosPendientes;
             }
         });

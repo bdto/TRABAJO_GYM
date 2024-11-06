@@ -139,7 +139,7 @@
             border-radius: 0.25rem;
             font-size: 1rem;
             min-width: 200px;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .search-input:focus {
@@ -155,7 +155,7 @@
             border: none;
             border-radius: 0.25rem;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
             font-size: 1rem;
             display: flex;
             align-items: center;
@@ -165,6 +165,7 @@
         .btn:hover {
             background-color: var(--accent-color);
             transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .btn-success {
@@ -175,13 +176,26 @@
             background-color: #059669;
         }
 
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--primary-color);
+        }
+
+        .btn-warning:hover {
+            background-color: #d97706;
+        }
+
         .table-container {
             overflow-x: auto;
+            background-color: var(--card-background);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             min-width: 600px;
         }
 
@@ -195,6 +209,9 @@
             background-color: var(--hover-color);
             font-weight: bold;
             color: var(--secondary-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         tr:hover {
@@ -213,12 +230,14 @@
             border: 1px solid var(--border-color);
             background-color: var(--card-background);
             cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+            border-radius: 0.25rem;
         }
 
         .pagination button:hover, .pagination button.active {
             background-color: var(--secondary-color);
             color: #fff;
+            transform: translateY(-2px);
         }
 
         @media (max-width: 768px) {
@@ -316,7 +335,7 @@
                     <td>${pago.duracion}</td>
                     <td>${pago.estado}</td>
                     <td>
-                        <button onclick="editarPago(${pago.id_pagos})" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</button>
+                        <button onclick="editarPago('${pago.id_pagos}')" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
