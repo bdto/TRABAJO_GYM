@@ -6,7 +6,7 @@
     <title>Usuarios - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<style>
+    <style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #f472b6;
@@ -40,6 +40,8 @@
             margin: 0 auto;
             padding: 0 1rem;
         }
+
+        
 
         header {
             background-color: var(--primary-color);
@@ -286,7 +288,7 @@
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-user-plus fa-2x"></i>
-                <h2 class="card-title">Registrar Usuario</h2>
+                <h2 class="card-title" id="formTitle">Registrar Usuario</h2>
             </div>
             <div class="card-content">
                 <form id="userForm">
@@ -329,7 +331,7 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit"><i class="fas fa-save"></i> Registrar Usuario</button>
+                    <button type="submit" id="submitBtn"><i class="fas fa-save"></i> Registrar Usuario</button>
                 </form>
             </div>
         </div>
@@ -365,16 +367,34 @@
         </div>
     </main>
 
-<script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('userForm');
             const idClienteInput = document.getElementById('id_cliente');
             const totalUsuariosElement = document.getElementById('totalUsuarios');
             const usuariosActivosElement = document.getElementById('usuariosActivos');
             const usuariosInactivosElement = document.getElementById('usuariosInactivos');
+            const formTitle = document.getElementById('formTitle');
+            const submitBtn = document.getElementById('submitBtn');
 
             let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-            idClienteInput.value = usuarios.length > 0 ? Math.max(...usuarios.map(u => parseInt(u.id_cliente))) + 1 : 1;
+            let editingUserId = null;
+
+            // Check if we're in edit mode
+            const urlParams = new URLSearchParams(window.location.search);
+            const isEditing = urlParams.get('editar') === 'true';
+
+            if (isEditing) {
+                const userToEdit = JSON.parse(localStorage.getItem('usuarioEditar'));
+                if (userToEdit) {
+                    fillFormWithUserData(userToEdit);
+                    editingUserId = userToEdit.id_cliente;
+                    formTitle.textContent = 'Editar Usuario';
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Actualizar Usuario';
+                }
+            } else {
+                idClienteInput.value = usuarios.length > 0 ? Math.max(...usuarios.map(u => parseInt(u.id_cliente))) + 1 : 1;
+            }
 
             updateStats();
 
@@ -382,35 +402,53 @@
                 e.preventDefault();
 
                 const formData = new FormData(form);
-                const newUser = Object.fromEntries(formData.entries());
+                const userData = Object.fromEntries(formData.entries());
 
-                const isDuplicate = usuarios.some(usuario => 
-                    usuario.nombre === newUser.nombre &&
-                    usuario.apellido === newUser.apellido &&
-                    usuario.telefono === newUser.telefono
-                );
+                if (isEditing) {
+                    // Update existing user
+                    const index = usuarios.findIndex(u => u.id_cliente === editingUserId);
+                    if (index !== -1) {
+                        usuarios[index] = userData;
+                        localStorage.setItem('usuarios', JSON.stringify(usuarios));
+                        alert('Usuario actualizado exitosamente.');
+                        window.location.href = 'tablausuarios.php';
+                    }
+                } else {
+                    // Add new user
+                    const isDuplicate = usuarios.some(usuario => 
+                        usuario.nombre === userData.nombre &&
+                        usuario.apellido === userData.apellido &&
+                        usuario.telefono === userData.telefono
+                    );
 
-                if (isDuplicate) {
-                    alert('Ya existe un registro con estos datos.');
-                    return;
+                    if (isDuplicate) {
+                        alert('Ya existe un registro con estos datos.');
+                        return;
+                    }
+
+                    usuarios.push(userData);
+                    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+                    alert('Usuario registrado exitosamente.');
+                    form.reset();
+                    idClienteInput.value = parseInt(idClienteInput.value) + 1;
                 }
 
-                usuarios.push(newUser);
-                localStorage.setItem('usuarios', JSON.stringify(usuarios));
-
                 updateStats();
-
-                form.reset();
-                idClienteInput.value = parseInt(idClienteInput.value) + 1;
-
-                alert('Usuario registrado exitosamente.');
             });
 
             function updateStats() {
                 totalUsuariosElement.textContent = usuarios.length;
                 usuariosActivosElement.textContent = usuarios.filter(u => u.estado === 'activo').length;
-                
                 usuariosInactivosElement.textContent = usuarios.filter(u => u.estado === 'inactivo').length;
+            }
+
+            function fillFormWithUserData(user) {
+                for (const [key, value] of Object.entries(user)) {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        input.value = value;
+                    }
+                }
             }
         });
     </script>

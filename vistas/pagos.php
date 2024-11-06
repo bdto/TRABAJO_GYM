@@ -301,14 +301,14 @@
     <main class="container">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><i class="fas fa-money-bill-wave"></i> Registrar Pago</h2>
+                <h2 class="card-title"><i class="fas fa-money-bill-wave"></i> <span id="formTitle">Registrar Pago</span></h2>
             </div>
             <div class="card-content">
                 <form id="paymentForm">
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="id_pagos">ID Pagos:</label>
-                            <input type="text" id="id_pagos" name="id_pagos" required readonly>
+                            <input type="text" id="id_pagos" name="id_pagos" required>
                         </div>
                         <div class="form-group">
                             <label for="id_cliente">ID Cliente:</label>
@@ -347,7 +347,7 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit"><i class="fas fa-save"></i> Registrar Pago</button>
+                    <button type="submit" id="submitBtn"><i class="fas fa-save"></i> <span id="submitBtnText">Registrar Pago</span></button>
                 </form>
             </div>
         </div>
@@ -399,13 +399,32 @@
             const duracionInput = document.getElementById('duracion');
             const idClienteInput = document.getElementById('id_cliente');
             const idAdminInput = document.getElementById('id_admin');
-            const idClienteError = document.getElementById('id_cliente_error');
+            const idClienteError =   document.getElementById('id_cliente_error');
             const idAdminError = document.getElementById('id_admin_error');
+            const formTitle = document.getElementById('formTitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
 
-            // Load existing payments and set initial ID
-            let pagos = 
-JSON.parse(localStorage.getItem('pagos')) || [];
-            idPagosInput.value = pagos.length > 0 ? Math.max(...pagos.map(p => parseInt(p.id_pagos))) + 1 : 1;
+            let pagos = JSON.parse(localStorage.getItem('pagos')) || [];
+            let editingPaymentId = null;
+
+            // Check if we're in edit mode
+            const urlParams = new URLSearchParams(window.location.search);
+            const isEditing = urlParams.get('editar') === 'true';
+
+            if (isEditing) {
+                const paymentToEdit = JSON.parse(localStorage.getItem('pagoEditar'));
+                if (paymentToEdit) {
+                    fillFormWithPaymentData(paymentToEdit);
+                    editingPaymentId = paymentToEdit.id_pagos;
+                    formTitle.textContent = 'Editar Pago';
+                    submitBtnText.textContent = 'Actualizar Pago';
+                    idPagosInput.removeAttribute('readonly');
+                }
+            } else {
+                idPagosInput.value = pagos.length > 0 ? Math.max(...pagos.map(p => parseInt(p.id_pagos))) + 1 : 1;
+                idPagosInput.setAttribute('readonly', true);
+            }
 
             updateStats();
 
@@ -441,22 +460,37 @@ JSON.parse(localStorage.getItem('pagos')) || [];
                 }
 
                 const formData = new FormData(form);
-                const newPayment = Object.fromEntries(formData.entries());
+                const paymentData = Object.fromEntries(formData.entries());
 
-                // Add new payment
-                pagos.push(newPayment);
+                if (isEditing) {
+                    // Update existing payment
+                    const index = pagos.findIndex(p => p.id_pagos == editingPaymentId);
+                    if (index !== -1) {
+                        pagos[index] = paymentData;
+                    }
+                } else {
+                    // Add new payment
+                    pagos.push(paymentData);
+                }
+
                 localStorage.setItem('pagos', JSON.stringify(pagos));
 
                 // Update stats
                 updateStats();
 
-                // Reset form and increment ID
-                form.reset();
-                
-                idPagosInput.value = parseInt(idPagosInput.value) + 1;
-
-                alert('Pago registrado exitosamente.');
+                // Reset form and redirect
+                alert(isEditing ? 'Pago actualizado exitosamente.' : 'Pago registrado exitosamente.');
+                window.location.href = 'tablapagos.php';
             });
+
+            function fillFormWithPaymentData(payment) {
+                for (const [key, value] of Object.entries(payment)) {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        input.value = value;
+                    }
+                }
+            }
 
             function updateStats() {
                 const totalRecaudado = pagos.reduce((total, pago) => total + Number(pago.precio), 0);
