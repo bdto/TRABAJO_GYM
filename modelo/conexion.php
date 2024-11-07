@@ -22,7 +22,7 @@ class Conexion {
 
     // Método para ejecutar la migración
     private function runMigration() {
-        $filePath = __DIR__ . '/migracion.sql';
+        $filePath = __DIR__ . '../modelo/migracion.sql';
         if (file_exists($filePath)) {
             $sql = file_get_contents($filePath);
             try {
