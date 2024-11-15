@@ -1,13 +1,15 @@
 <?php
-$conexion = new mysqli('localhost', 'root', '12345678', 'gym2');
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+?>
+<?php
+require_once 'conexion.php';
 
-if ($conexion->connect_error) {
-    die('Error de conexión: ' . $conexion->connect_error);
-}
+$conexion = new Conexion();
+$conn = $conexion->getConnection();
 
-// Verificación de que todos los campos estén definidos y se han enviado
 if (isset($_POST['id_cliente'], $_POST['nombre'], $_POST['apellido'], $_POST['telefono'], $_POST['genero'], $_POST['f_registro'], $_POST['estado'])) {
-    // Recibir los datos del formulario
     $id_cliente = $_POST['id_cliente'];
     $nombre = $_POST['nombre'];
     $apellido = $_POST['apellido'];
@@ -16,23 +18,26 @@ if (isset($_POST['id_cliente'], $_POST['nombre'], $_POST['apellido'], $_POST['te
     $f_registro = $_POST['f_registro'];
     $estado = $_POST['estado'];
 
-    // Preparar la consulta de inserción con todos los campos
-    $consulta = $conexion->prepare("INSERT INTO usuarios (id_cliente, nombre, apellido, telefono, genero, f_registro, estado) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $consulta->bind_param("issssss", $id_cliente, $nombre, $apellido, $telefono, $genero, $f_registro, $estado);
+    $consulta = $conn->prepare("INSERT INTO usuarios (id_cliente, nombre, apellido, telefono, genero, f_registro, estado) VALUES (:id_cliente, :nombre, :apellido, :telefono, :genero, :f_registro, :estado)");
+    
+    $consulta->bindParam(':id_cliente', $id_cliente, PDO::PARAM_INT);
+    $consulta->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+    $consulta->bindParam(':apellido', $apellido, PDO::PARAM_STR);
+    $consulta->bindParam(':telefono', $telefono, PDO::PARAM_STR);
+    $consulta->bindParam(':genero', $genero, PDO::PARAM_STR);
+    $consulta->bindParam(':f_registro', $f_registro, PDO::PARAM_STR);
+    $consulta->bindParam(':estado', $estado, PDO::PARAM_STR);
 
-    // Ejecutar la consulta y verificar el resultado
-    if ($consulta->execute()) {
-        echo "Datos registrados exitosamente.";
-    } else {
-        echo "Error al registrar los datos: " . $consulta->error;
+    try {
+        if ($consulta->execute()) {
+            echo "Datos registrados exitosamente en la base de datos.";
+        } else {
+            echo "Error al registrar los datos: " . print_r($consulta->errorInfo(), true);
+        }
+    } catch (PDOException $e) {
+        echo "Excepción capturada: " . $e->getMessage();
     }
-
-    // Cerrar la consulta
-    $consulta->close();
 } else {
     echo "Por favor, complete todos los campos requeridos.";
 }
-
-// Cerrar la conexión
-$conexion->close();
 ?>

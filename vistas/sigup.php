@@ -279,6 +279,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid #f5c6cb;
         }
 
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
         @media (max-width: 768px) {
             nav ul {
                 display: none;
@@ -343,11 +349,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                 <div class="form-group">
                     <label for="id"><i class="fas fa-id-card"></i> ID de Administrador</label>
-                    <input type="text" id="id" name="id" required>
+                    <input type="text" id="id" name="id" required value="<?php echo isset($_POST['id']) ? htmlspecialchars($_POST['id']) : ''; ?>">
+                    <?php if (!empty($adminIdError)): ?>
+                        <p class="error-message"><?php echo $adminIdError; ?></p>
+                    <?php endif; ?>
                 </div>
                 <div class="form-group">
-                    <label for="usuario"><i class="fas fa-user"></i> Nombre completo</label>
-                    <input type="text" id="usuario" name="usuario" required>
+                    <label for="usuario"><i class="fas fa-user"></i> Nombre Usuario</label>
+                    <input type="text" id="usuario" name="usuario" required value="<?php echo isset($_POST['usuario']) ? htmlspecialchars($_POST['usuario']) : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label for="password"><i class="fas fa-lock"></i> Contraseña</label>
@@ -368,6 +377,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const nav = document.querySelector('nav');
             menuToggle.addEventListener('click', () => {
                 nav.classList.toggle('active');
+            });
+
+            // Validación del campo ID de administrador
+            const idInput = document.getElementById('id');
+            const errorMessage = document.createElement('p');
+            errorMessage.className = 'error-message';
+            idInput.parentNode.appendChild(errorMessage);
+            
+            idInput.addEventListener('input', function() {
+                if (!/^\d*$/.test(this.value)) {
+                    errorMessage.textContent = 'Dato inválido para introducir';
+                    errorMessage.style.display = 'block';
+                } else {
+                    errorMessage.style.display = 'none';
+                }
             });
         });
     </script>

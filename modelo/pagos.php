@@ -1,9 +1,8 @@
 <?php
-$conexion = new mysqli('localhost', 'root', '12345678', 'gym2');
+require_once 'conexion.php';
 
-if ($conexion->connect_error) {
-    die('Error de conexión: ' . $conexion->connect_error);
-}
+$conexion = new Conexion();
+$conn = $conexion->getConnection();
 
 // Verificación de que todos los campos estén definidos y se han enviado
 if (isset($_POST['id_pagos'], $_POST['id_cliente'], $_POST['id_admin'], $_POST['tipo_subscripcion'], $_POST['precio'], $_POST['duracion'], $_POST['estado'])) {
@@ -17,22 +16,24 @@ if (isset($_POST['id_pagos'], $_POST['id_cliente'], $_POST['id_admin'], $_POST['
     $estado = $_POST['estado'];
     
     // Preparar la consulta de inserción con todos los campos
-    $consulta = $conexion->prepare("INSERT INTO pagos (id_pagos, id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $consulta->bind_param("iiisdis", $id_pagos, $id_cliente, $id_admin, $tipo_subscripcion, $precio, $duracion, $estado);
+    $consulta = $conn->prepare("INSERT INTO pagos (id_pagos, id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado) VALUES (:id_pagos, :id_cliente, :id_admin, :tipo_subscripcion, :precio, :duracion, :estado)");
+    
+    // Bind parameters
+    $consulta->bindParam(':id_pagos', $id_pagos, PDO::PARAM_INT);
+    $consulta->bindParam(':id_cliente', $id_cliente, PDO::PARAM_INT);
+    $consulta->bindParam(':id_admin', $id_admin, PDO::PARAM_INT);
+    $consulta->bindParam(':tipo_subscripcion', $tipo_subscripcion, PDO::PARAM_STR);
+    $consulta->bindParam(':precio', $precio, PDO::PARAM_STR);
+    $consulta->bindParam(':duracion', $duracion, PDO::PARAM_INT);
+    $consulta->bindParam(':estado', $estado, PDO::PARAM_STR);
 
     // Ejecutar la consulta y verificar el resultado
     if ($consulta->execute()) {
         echo "Datos registrados exitosamente.";
     } else {
-        echo "Error al registrar los datos: " . $consulta->error;
+        echo "Error al registrar los datos: " . $consulta->errorInfo()[2];
     }
-
-    // Cerrar la consulta
-    $consulta->close();
 } else {
     echo "Por favor, complete todos los campos requeridos.";
 }
-
-// Cerrar la conexión
-$conexion->close();
 ?>
