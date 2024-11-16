@@ -331,7 +331,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
             <div class="links">
                 <a href="sigup.php">Registrarse</a>
-                <a href="index.php">Inicio</a> 
+                <a href="../index.php">Inicio</a> 
             </div>
         </div>
     </div>

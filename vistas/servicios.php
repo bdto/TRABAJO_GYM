@@ -393,7 +393,7 @@
                 </div>
                 <nav id="main-nav">
                     <ul>
-                        <li><a href="index.php"><i class="fas fa-home"></i> Inicio</a></li>
+                        <li><a href="../index.php"><i class="fas fa-home"></i> Inicio</a></li>
                         <li><a href="informacion.php"><i class="fas fa-info-circle"></i> Nosotros</a></li>
                         <li><a href="servicios.php"><i class="fas fa-dumbbell"></i> Servicios</a></li>
                         <li><a href="contacto.php"><i class="fas fa-envelope"></i> Contacto</a></li>

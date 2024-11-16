@@ -429,11 +429,11 @@
                 </div>
                 <nav id="main-nav">
                     <ul>
-                        <li><a href="index.php"><i class="fas fa-home"></i> Inicio</a></li>
-                        <li><a href="informacion.php"><i class="fas fa-info-circle"></i> Nosotros</a></li>
-                        <li><a href="servicios.php"><i class="fas fa-dumbbell"></i> Servicios</a></li>
-                        <li><a href="contacto.php"><i class="fas fa-envelope"></i> Contacto</a></li>
-                        <li><a href="login.php" class="login-btn"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                    <li><a href="index.php"><i class="fas fa-home"></i> Inicio</a></li>
+                        <li><a href="../vistas/informacion.php"><i class="fas fa-info-circle"></i> Nosotros</a></li>
+                        <li><a href="../vistas/servicios.php"><i class="fas fa-dumbbell"></i> Servicios</a></li>
+                        <li><a href="../vistas/contacto.php"><i class="fas fa-envelope"></i> Contacto</a></li>
+                        <li><a href="../vistas/login.php" class="login-btn"><i class="fas fa-sign-in-alt"></i> Login</a></li>
                     </ul>
                 </nav>
                 <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
@@ -451,11 +451,11 @@
                         <p>Transforma tu cuerpo y alcanza tu máximo potencial. Entrena con nosotros para lograr fuerza,
                             resistencia y bienestar, todo mientras disfrutas de un estilo de vida saludable y activo.</p>
                         <div class="hero-buttons">
-                            <a href="login.php" class="btn btn-primary">
+                            <a href="../vistas/login.php" class="btn btn-primary">
                                 <span>Unirse Ahora</span>
                                 <i class="fas fa-arrow-right"></i>
                             </a>
-                            <a href="informacion.php" class="btn btn-secondary">
+                            <a href="../vistas/informacion.php" class="btn btn-secondary">
                                 <span>Leer Más</span>
                                 <i class="fas fa-arrow-right"></i>
                             </a>

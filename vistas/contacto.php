@@ -6,7 +6,7 @@
     <title>Contacto - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+<style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #db2777;
@@ -360,7 +360,7 @@
                 </div>
                 <nav id="main-nav">
                     <ul>
-                        <li><a href="index.php"><i class="fas fa-home"></i> Inicio</a></li>
+                        <li><a href="../index.php"><i class="fas fa-home"></i> Inicio</a></li>
                         <li><a href="informacion.php"><i class="fas fa-info-circle"></i> Nosotros</a></li>
                         <li><a href="servicios.php"><i class="fas fa-dumbbell"></i> Servicios</a></li>
                         <li><a href="contacto.php"><i class="fas fa-envelope"></i> Contacto</a></li>
