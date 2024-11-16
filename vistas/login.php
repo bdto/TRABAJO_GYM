@@ -330,7 +330,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
             </form>
             <div class="links">
-                <a href="#">¿Olvidaste tu contraseña?</a>
                 <a href="sigup.php">Registrarse</a>
                 <a href="index.php">Inicio</a> 
             </div>
