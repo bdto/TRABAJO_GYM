@@ -18,8 +18,9 @@ class Admin {
     }
 
     public function registrarUsuario() {
-        $query = "INSERT INTO admins (usuario, password) VALUES (:usuario, :password)";
+        $query = "INSERT INTO admins (ID_Admin, usuario, password) VALUES (:id, :usuario, :password)";
         $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $this->id);
         $stmt->bindParam(':usuario', $this->usuario);
         $stmt->bindParam(':password', $this->password);
         return $stmt->execute();

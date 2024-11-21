@@ -1,161 +1,115 @@
 <?php
-session_start();
-
-require_once '../modelo/conexion.php';
-require_once '../modelo/usuarios.php';
-
 class UsuariosController {
-    private $conn;
+    private $db;
 
     public function __construct() {
-        $conexion = new Conexion();
-        $this->conn = $conexion->getConnection();
-    }
-
-    public function login($usuario, $password) {
-        try {
-            $query = "SELECT * FROM administradores WHERE usuario = :usuario";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':usuario', $usuario);
-            $stmt->execute();
-
-            if ($stmt->rowCount() == 1) {
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if (password_verify($password, $row['password'])) {
-                    $_SESSION['usuario'] = $row['usuario'];
-                    $_SESSION['id_admin'] = $row['id_admin'];
-                    return true;
-                }
-            }
-            return false;
-        } catch (PDOException $e) {
-            error_log("Error en login: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    public function registrarUsuario($datos) {
-        try {
-            $query = "INSERT INTO usuarios (nombre, apellido, telefono, genero, f_registro, estado) 
-                      VALUES (:nombre, :apellido, :telefono, :genero, :f_registro, :estado)";
-            $stmt = $this->conn->prepare($query);
-            
-            $stmt->bindParam(':nombre', $datos['nombre']);
-            $stmt->bindParam(':apellido', $datos['apellido']);
-            $stmt->bindParam(':telefono', $datos['telefono']);
-            $stmt->bindParam(':genero', $datos['genero']);
-            $stmt->bindParam(':f_registro', $datos['f_registro']);
-            $stmt->bindParam(':estado', $datos['estado']);
-
-            if ($stmt->execute()) {
-                return $this->conn->lastInsertId();
-            } else {
-                return false;
-            }
-        } catch (PDOException $e) {
-            error_log("Error al registrar usuario: " . $e->getMessage());
-            return false;
-        }
+        require_once '../modelo/conexion.php';
+        $this->db = (new Conexion())->getConnection();
     }
 
     public function obtenerUsuarios() {
+        $query = "SELECT * FROM usuarios"; // Cambiado 'clientes' por 'usuarios'
         try {
-            $query = "SELECT * FROM usuarios";
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->db->prepare($query);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error al obtener usuarios: " . $e->getMessage());
-            return false;
+            throw new Exception("Error al obtener usuarios: " . $e->getMessage());
         }
     }
 
     public function obtenerUsuario($id) {
+        $query = "SELECT * FROM usuarios WHERE id_cliente = :id_cliente"; // Cambiado 'clientes' por 'usuarios'
         try {
-            $query = "SELECT * FROM usuarios WHERE id_cliente = :id";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':id', $id);
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_cliente', $id, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error al obtener usuario: " . $e->getMessage());
-            return false;
+            throw new Exception("Error al obtener usuario: " . $e->getMessage());
         }
     }
 
-    public function actualizarUsuario($id, $datos) {
+    public function registrarUsuario($nombre, $apellido, $telefono, $genero, $f_registro, $estado) {
+        $query = "INSERT INTO usuarios (nombre, apellido, telefono, genero, f_registro, estado) VALUES (:nombre, :apellido, :telefono, :genero, :f_registro, :estado)";
         try {
-            $query = "UPDATE usuarios SET 
-                      nombre = :nombre, 
-                      apellido = :apellido, 
-                      telefono = :telefono, 
-                      genero = :genero, 
-                      estado = :estado 
-                      WHERE id_cliente = :id";
-            $stmt = $this->conn->prepare($query);
-            
-            $stmt->bindParam(':nombre', $datos['nombre']);
-            $stmt->bindParam(':apellido', $datos['apellido']);
-            $stmt->bindParam(':telefono', $datos['telefono']);
-            $stmt->bindParam(':genero', $datos['genero']);
-            $stmt->bindParam(':estado', $datos['estado']);
-            $stmt->bindParam(':id', $id);
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':nombre', $nombre);
+            $stmt->bindParam(':apellido', $apellido);
+            $stmt->bindParam(':telefono', $telefono);
+            $stmt->bindParam(':genero', $genero);
+            $stmt->bindParam(':f_registro', $f_registro);
+            $stmt->bindParam(':estado', $estado);
 
-            return $stmt->execute();
+            if ($stmt->execute()) {
+                return json_encode(['success' => true, 'message' => 'Usuario registrado con éxito']);
+            } else {
+                return json_encode(['success' => false, 'message' => 'Error al registrar usuario']);
+            }
         } catch (PDOException $e) {
-            error_log("Error al actualizar usuario: " . $e->getMessage());
-            return false;
+            throw new Exception("Error al registrar usuario: " . $e->getMessage());
+        }
+    }
+
+    public function actualizarUsuario($id, $nombre, $apellido, $telefono, $genero, $estado) {
+        $query = "UPDATE usuarios SET nombre = :nombre, apellido = :apellido, telefono = :telefono, genero = :genero, estado = :estado WHERE id_cliente = :id_cliente"; // Cambiado 'clientes' por 'usuarios'
+        try {
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_cliente', $id, PDO::PARAM_INT);
+            $stmt->bindParam(':nombre', $nombre);
+            $stmt->bindParam(':apellido', $apellido);
+            $stmt->bindParam(':telefono', $telefono);
+            $stmt->bindParam(':genero', $genero);
+            $stmt->bindParam(':estado', $estado);
+
+            if ($stmt->execute()) {
+                return json_encode(['success' => true, 'message' => 'Usuario actualizado con éxito']);
+            } else {
+                return json_encode(['success' => false, 'message' => 'Error al actualizar usuario']);
+            }
+        } catch (PDOException $e) {
+            throw new Exception("Error al actualizar usuario: " . $e->getMessage());
+        }
+    }
+
+    public function procesarSolicitud() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+
+            try {
+                switch ($action) {
+                    case 'registrar':
+                        echo $this->registrarUsuario(
+                            $_POST['nombre'],
+                            $_POST['apellido'],
+                            $_POST['telefono'],
+                            $_POST['genero'],
+                            $_POST['f_registro'],
+                            $_POST['estado']
+                        );
+                        break;
+                    case 'actualizar':
+                        echo $this->actualizarUsuario(
+                            $_POST['id'],
+                            $_POST['nombre'],
+                            $_POST['apellido'],
+                            $_POST['telefono'],
+                            $_POST['genero'],
+                            $_POST['estado']
+                        );
+                        break;
+                    default:
+                        echo json_encode(['success' => false, 'message' => 'Acción no válida']);
+                }
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            }
         }
     }
 }
 
-// Manejo de solicitudes
-$controller = new UsuariosController();
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    $response = ['success' => false, 'message' => 'Acción no válida'];
-
-    switch ($action) {
-        case 'login':
-            if (isset($_POST['usuario']) && isset($_POST['password'])) {
-                $result = $controller->login($_POST['usuario'], $_POST['password']);
-                $response = ['success' => $result, 'message' => $result ? 'Login exitoso' : 'Credenciales incorrectas'];
-            }
-            break;
-        case 'registrar':
-            if (isset($_POST['datos']) && is_array($_POST['datos'])) {
-                $result = $controller->registrarUsuario($_POST['datos']);
-                $response = ['success' => $result !== false, 'id' => $result, 'message' => $result ? 'Usuario registrado con éxito' : 'Error al registrar usuario'];
-            }
-            break;
-        case 'actualizar':
-            if (isset($_POST['id']) && isset($_POST['datos']) && is_array($_POST['datos'])) {
-                $result = $controller->actualizarUsuario($_POST['id'], $_POST['datos']);
-                $response = ['success' => $result, 'message' => $result ? 'Usuario actualizado con éxito' : 'Error al actualizar usuario'];
-            }
-            break;
-    }
-
-    echo json_encode($response);
-
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $action = $_GET['action'] ?? '';
-    $response = ['success' => false, 'message' => 'Acción no válida'];
-
-    switch ($action) {
-        case 'obtenerTodos':
-            $usuarios = $controller->obtenerUsuarios();
-            $response = ['success' => $usuarios !== false, 'data' => $usuarios, 'message' => $usuarios ? 'Usuarios obtenidos con éxito' : 'Error al obtener usuarios'];
-            break;
-        case 'obtenerUno':
-            if (isset($_GET['id'])) {
-                $usuario = $controller->obtenerUsuario($_GET['id']);
-                $response = ['success' => $usuario !== false, 'data' => $usuario, 'message' => $usuario ? 'Usuario obtenido con éxito' : 'Error al obtener usuario'];
-            }
-            break;
-    }
-
-    echo json_encode($response);
+// Procesar la solicitud si se accede directamente a este archivo
+if (basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"])) {
+    $controller = new UsuariosController();
+    $controller->procesarSolicitud();
 }
-?>

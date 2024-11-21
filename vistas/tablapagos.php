@@ -1,3 +1,18 @@
+<?php
+session_start();
+require_once '../controlador/pagoscontroller.php';
+
+$controller = new PagosController();
+
+// Verificar si el usuario ha iniciado sesión
+if (!isset($_SESSION['usuario'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Obtener pagos
+$pagos = $controller->obtenerPagos();
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -45,6 +60,9 @@
             color: #fff;
             padding: 1rem 0;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .header-content {
@@ -73,6 +91,7 @@
         .logo h1 {
             font-size: 1.5rem;
             font-weight: bold;
+            color: var(--accent-color);
         }
 
         nav ul {
@@ -303,94 +322,118 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- contenido de la tabla -->
+                        <?php foreach ($pagos as $pago): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($pago['id_pagos']); ?></td>
+                                <td><?php echo htmlspecialchars($pago['id_cliente']); ?></td>
+                                <td><?php echo htmlspecialchars($pago['id_admin']); ?></td>
+                                <td><?php echo htmlspecialchars($pago['tipo_subscripcion']); ?></td>
+                                <td>$<?php echo number_format($pago['precio'], 2); ?></td>
+                                <td><?php echo htmlspecialchars($pago['duracion']); ?></td>
+                                <td><?php echo htmlspecialchars($pago['estado']); ?></td>
+                                <td>
+                                    <button onclick="editarPago(<?php echo $pago['id_pagos']; ?>)" class="btn btn-warning">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
             <div class="pagination" id="pagination">
-                <!-- paginacion -->
+                <!-- Pagination will be added here by JavaScript -->
             </div>
         </div>
     </main>
 
     <script>
-        let pagos = JSON.parse(localStorage.getItem('pagos')) || [];
-        let pagosFiltrados = [...pagos];
         const itemsPerPage = 10;
+        let currentPage = 1;
+        let filteredPagos = [];
 
-        const mostrarPagos = (page = 1) => {
-            const tbody = document.querySelector('#tablaPagos tbody');
-            tbody.innerHTML = '';
-            const start = (page - 1) * itemsPerPage;
-            const end = page * itemsPerPage;
-            const paginatedItems = pagosFiltrados.slice(start, end);
-            paginatedItems.forEach(pago => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${pago.id_pagos}</td>
-                    <td>${pago.id_cliente}</td>
-                    <td>${pago.id_admin}</td>
-                    <td>${pago.tipo_subscripcion}</td>
-                    <td>${pago.precio}</td>
-                    <td>${pago.duracion}</td>
-                    <td>${pago.estado}</td>
-                    <td>
-                        <button onclick="editarPago('${pago.id_pagos}')" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            mostrarPaginacion(page);
-        };
-
-        const mostrarPaginacion = (currentPage) => {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-            const totalPages = Math.ceil(pagosFiltrados.length / itemsPerPage);
-            for (let i = 1; i <= totalPages; i++) {
-                let btn = document.createElement('button');
-                btn.textContent = i;
-                btn.classList.toggle('active', i === currentPage);
-                btn.onclick = () => mostrarPagos(i);
-                pagination.appendChild(btn);
-            }
-        };
-
-        const filtrarTabla = () => {
+        function filtrarTabla() {
             const filtro = document.getElementById('filtro').value.toLowerCase();
-            pagosFiltrados = pagos.filter(pago => 
-                pago.tipo_subscripcion.toLowerCase().includes(filtro) ||
-                pago.estado.toLowerCase().includes(filtro)
-            );
-            mostrarPagos(1);
-        };
+            const tabla = document.getElementById('tablaPagos');
+            const filas = tabla.getElementsByTagName('tr');
 
-        const exportarExcel = () => {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "ID Pagos,ID Cliente,ID Admin,Tipo de Subscripción,Precio,Duración,Estado\n";
-            pagosFiltrados.forEach(pago => {
-                csvContent += `${pago.id_pagos},${pago.id_cliente},${pago.id_admin},${pago.tipo_subscripcion},${pago.precio},${pago.duracion},${pago.estado}\n`;
-            });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "pagos_gym_tina.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
+            filteredPagos = [];
 
-        const editarPago = (id) => {
-            const pago = pagos.find(p => p.id_pagos == id);
-            if (pago) {
-                localStorage.setItem('pagoEditar', JSON.stringify(pago));
-                window.location.href = 'pagos.php?editar=true';
+            for (let i = 1; i < filas.length; i++) {
+                const fila = filas[i];
+                const celdas = fila.getElementsByTagName('td');
+                let mostrar = false;
+
+                for (let j = 0; j < celdas.length; j++) {
+                    const texto = celdas[j].textContent.toLowerCase();
+                    if (texto.indexOf(filtro) > -1) {
+                        mostrar = true;
+                        break;
+                    }
+                }
+
+                if (mostrar) {
+                    filteredPagos.push(fila);
+                }
             }
-        };
 
-        mostrarPagos();
+            mostrarPagina(1);
+        }
 
-        document.getElementById('filtro').addEventListener('input', filtrarTabla);
+        function mostrarPagina(pagina) {
+            const tabla = document.getElementById('tablaPagos');
+            const filas = tabla.getElementsByTagName('tr');
+            const inicio = (pagina - 1) * itemsPerPage;
+            const fin = inicio + itemsPerPage;
+
+            for (let i = 1; i < filas.length; i++) {
+                filas[i].style.display = 'none';
+            }
+
+            for (let i = inicio; i < fin && i < filteredPagos.length; i++) {
+                filteredPagos[i].style.display = '';
+            }
+
+            actualizarPaginacion(pagina);
+        }
+
+        function actualizarPaginacion(paginaActual) {
+            const totalPaginas = Math.ceil(filteredPagos.length / itemsPerPage);
+            const paginacion = document.getElementById('pagination');
+            paginacion.innerHTML = '';
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                const boton = document.createElement('button');
+                boton.textContent = i;
+                boton.onclick = function() { mostrarPagina(i); };
+                if (i === paginaActual) {
+                    boton.classList.add('active');
+                }
+                paginacion.appendChild(boton);
+            }
+        }
+
+        function editarPago(id) {
+            window.location.href = `pagos.php?editar=true&id=${id}`;
+        }
+
+        function exportarExcel() {
+            let tabla = document.getElementById('tablaPagos');
+            let html = tabla.outerHTML;
+            let url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+            let downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            downloadLink.href = url;
+            downloadLink.download = 'pagos_gym_tina.xls';
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Inicializar la tabla
+        document.addEventListener('DOMContentLoaded', function() {
+            filteredPagos = Array.from(document.getElementById('tablaPagos').getElementsByTagName('tr')).slice(1);
+            mostrarPagina(1);
+        });
     </script>
 </body>
 </html>

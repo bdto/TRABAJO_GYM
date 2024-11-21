@@ -1,7 +1,10 @@
 <?php
 session_start();
+require_once __DIR__ . '/../controlador/admincontroller.php';
 
 $error_message = '';
+$success_message = '';
+$controller = new AdminController();
 
 // Solo se muestra el formulario de login si ya se ingresó el código de acceso correctamente
 $show_login_form = isset($_SESSION['access_granted']) && $_SESSION['access_granted'];
@@ -20,30 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = $_POST['username'];
         $password = $_POST['password'];
 
-        $authenticated = false;
-        $user_exists = false;
+        $result = $controller->login($username, $password);
 
-        if (isset($_SESSION['administrators'])) {
-            foreach ($_SESSION['administrators'] as $admin) {
-                if ($admin['nombre'] === $username) {
-                    $user_exists = true;
-                    if (password_verify($password, $admin['password'])) {
-                        $authenticated = true;
-                        break;
-                    } else {
-                        $error_message = "Contraseña Incorrecta";
-                        break;
-                    }
-                }
-            }
-            if (!$user_exists) {
-                $error_message = "Usuario Incorrecto";
-            }
-        }
-
-        if ($authenticated) {
+        if ($result['success']) {
             header("Location: administradores.php");
             exit();
+        } else {
+            $error_message = $result['message'];
         }
     }
 }
@@ -287,6 +273,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transform: translateZ(20px);
             text-align: center;
         }
+
+        .success-message {
+            color: var(--success-color);
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            transform: translateZ(20px);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -306,6 +300,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php
             if (!empty($error_message)) {
                 echo "<p class='error-message'>{$error_message}</p>";
+            }
+            if (!empty($success_message)) {
+                echo "<p class='success-message'>{$success_message}</p>";
             }
             ?>
             <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
@@ -330,7 +327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
             </form>
             <div class="links">
-                <a href="sigup.php">Registrarse</a>
+                <a href="../vistas/sigup.php">Registrarse</a>
                 <a href="../index.php">Inicio</a> 
             </div>
         </div>

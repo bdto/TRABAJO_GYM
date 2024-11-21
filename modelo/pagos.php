@@ -1,39 +1,79 @@
 <?php
 require_once 'conexion.php';
 
-$conexion = new Conexion();
-$conn = $conexion->getConnection();
+class Pagos {
+    private $conn;
 
-// Verificación de que todos los campos estén definidos y se han enviado
-if (isset($_POST['id_pagos'], $_POST['id_cliente'], $_POST['id_admin'], $_POST['tipo_subscripcion'], $_POST['precio'], $_POST['duracion'], $_POST['estado'])) {
-    // Recibir los datos del formulario
-    $id_pagos = $_POST['id_pagos'];
-    $id_cliente = $_POST['id_cliente'];
-    $id_admin = $_POST['id_admin'];
-    $tipo_subscripcion = $_POST['tipo_subscripcion'];
-    $precio = $_POST['precio'];
-    $duracion = $_POST['duracion'];
-    $estado = $_POST['estado'];
-    
-    // Preparar la consulta de inserción con todos los campos
-    $consulta = $conn->prepare("INSERT INTO pagos (id_pagos, id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado) VALUES (:id_pagos, :id_cliente, :id_admin, :tipo_subscripcion, :precio, :duracion, :estado)");
-    
-    // Bind parameters
-    $consulta->bindParam(':id_pagos', $id_pagos, PDO::PARAM_INT);
-    $consulta->bindParam(':id_cliente', $id_cliente, PDO::PARAM_INT);
-    $consulta->bindParam(':id_admin', $id_admin, PDO::PARAM_INT);
-    $consulta->bindParam(':tipo_subscripcion', $tipo_subscripcion, PDO::PARAM_STR);
-    $consulta->bindParam(':precio', $precio, PDO::PARAM_STR);
-    $consulta->bindParam(':duracion', $duracion, PDO::PARAM_INT);
-    $consulta->bindParam(':estado', $estado, PDO::PARAM_STR);
-
-    // Ejecutar la consulta y verificar el resultado
-    if ($consulta->execute()) {
-        echo "Datos registrados exitosamente.";
-    } else {
-        echo "Error al registrar los datos: " . $consulta->errorInfo()[2];
+    public function __construct() {
+        $conexion = new Conexion();
+        $this->conn = $conexion->getConnection();
     }
-} else {
-    echo "Por favor, complete todos los campos requeridos.";
+
+    public function registrarPago($datos) {
+        try {
+            $query = "INSERT INTO pagos (id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado) 
+                      VALUES (:id_cliente, :id_admin, :tipo_subscripcion, :precio, :duracion, :estado)";
+            $stmt = $this->conn->prepare($query);
+            
+            $stmt->bindParam(':id_cliente', $datos['id_cliente'], PDO::PARAM_INT);
+            $stmt->bindParam(':id_admin', $datos['id_admin'], PDO::PARAM_INT);
+            $stmt->bindParam(':tipo_subscripcion', $datos['tipo_subscripcion'], PDO::PARAM_STR);
+            $stmt->bindParam(':precio', $datos['precio'], PDO::PARAM_STR);
+            $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_STR);
+            $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
+
+            $stmt->execute();
+            return $this->conn->lastInsertId();
+        } catch (PDOException $e) {
+            error_log("Error al registrar el pago: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function actualizarPago($id, $datos) {
+        try {
+            $query = "UPDATE pagos SET id_cliente = :id_cliente, id_admin = :id_admin, 
+                      tipo_subscripcion = :tipo_subscripcion, precio = :precio, 
+                      duracion = :duracion, estado = :estado WHERE id_pagos = :id_pagos";
+            $stmt = $this->conn->prepare($query);
+            
+            $stmt->bindParam(':id_pagos', $id, PDO::PARAM_INT);
+            $stmt->bindParam(':id_cliente', $datos['id_cliente'], PDO::PARAM_INT);
+            $stmt->bindParam(':id_admin', $datos['id_admin'], PDO::PARAM_INT);
+            $stmt->bindParam(':tipo_subscripcion', $datos['tipo_subscripcion'], PDO::PARAM_STR);
+            $stmt->bindParam(':precio', $datos['precio'], PDO::PARAM_STR);
+            $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_STR);
+            $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error al actualizar el pago: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function obtenerPagos() {
+        try {
+            $query = "SELECT * FROM pagos ORDER BY id_pagos DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener los pagos: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function obtenerPago($id) {
+        try {
+            $query = "SELECT * FROM pagos WHERE id_pagos = :id_pagos";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id_pagos', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener el pago: " . $e->getMessage());
+            return false;
+        }
+    }
 }
-?>

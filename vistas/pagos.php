@@ -1,3 +1,25 @@
+<?php
+session_start();
+require_once '../controlador/pagoscontroller.php';
+
+$controller = new PagosController();
+
+// Verificar si el usuario ha iniciado sesión
+if (!isset($_SESSION['usuario'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Obtener pagos para las estadísticas
+$estadisticas = $controller->obtenerEstadisticasPagos();
+
+// Verificar si estamos en modo de edición
+$isEditing = isset($_GET['editar']) && $_GET['editar'] === 'true';
+$pagoToEdit = null;
+if ($isEditing && isset($_GET['id'])) {
+    $pagoToEdit = $controller->obtenerPago($_GET['id']);
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,8 +39,9 @@
             --border-color: #e5e7eb;
             --success-color: #48bb78;
             --warning-color: #ed8936;
-            --info-color: #4299e1;
-            --error-color: #f56565;
+            --danger-color: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s ease;
         }
 
         * {
@@ -44,7 +67,7 @@
             background-color: var(--primary-color);
             color: #fff;
             padding: 1rem 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -68,7 +91,7 @@
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-color);
-            transition: transform 0.3s ease;
+            transition: var(--transition);
         }
 
         .logo img:hover {
@@ -84,7 +107,7 @@
         nav ul {
             display: flex;
             list-style: none;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         nav a {
@@ -92,7 +115,7 @@
             text-decoration: none;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -111,41 +134,29 @@
         .card {
             background-color: var(--card-background);
             border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow);
             margin-bottom: 2rem;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .card-header {
             background-color: var(--secondary-color);
             color: #fff;
             padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 50%);
-            transform: rotate(30deg);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
         .card-title {
             font-size: 1.75rem;
             font-weight: bold;
-            position: relative;
-            z-index: 1;
         }
 
         .card-content {
@@ -155,7 +166,7 @@
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
+            gap: 1.5rem;
         }
 
         .form-group {
@@ -175,13 +186,13 @@
             border: 2px solid var(--border-color);
             border-radius: 0.5rem;
             font-size: 1rem;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         input:focus, select:focus {
             outline: none;
             border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.2);
+            box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2);
         }
 
         button {
@@ -193,14 +204,14 @@
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            margin: 2rem auto 0;
             width: 100%;
             max-width: 300px;
-            margin: 2rem auto 0;
         }
 
         button:hover {
@@ -219,14 +230,14 @@
         .stat-card {
             background-color: var(--card-background);
             border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow);
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .stat-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .stat-header {
@@ -247,78 +258,14 @@
             color: var(--primary-color);
         }
 
-        .bg-blue { background-color: var(--info-color); color: #fff; }
+        .bg-blue { background-color: var(--secondary-color); color: #fff; }
         .bg-green { background-color: var(--success-color); color: #fff; }
         .bg-orange { background-color: var(--warning-color); color: #fff; }
 
         .error-message {
-            color: var(--error-color);
+            color: var(--danger-color);
             font-size: 0.875rem;
             margin-top: 0.25rem;
-        }
-
-        /* Password popup styles */
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .popup-content {
-            background-color: var(--card-background);
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .popup-content h2 {
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        .popup-content input {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 2px solid var(--border-color);
-            border-radius: 0.5rem;
-            font-size: 1rem;
-        }
-
-        .popup-content button {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .popup-content button:hover {
-            background-color: var(--accent-color);
-        }
-
-        #backButton {
-            margin-top: 1rem;
-            background-color: var(--primary-color);
-        }
-
-        #backButton:hover {
-            background-color: var(--accent-color);
         }
 
         @media (max-width: 768px) {
@@ -343,16 +290,6 @@
     </style>
 </head>
 <body>
-    <div id="passwordPopup" class="popup-overlay">
-        <div class="popup-content">
-            <h2>Ingrese la contraseña</h2>
-            <input type="password" id="passwordInput" placeholder="Contraseña">
-            <button id="submitPassword">Ingresar</button>
-            <p id="errorMessage" class="error-message"></p>
-            <button id="backButton" style="display: none;">Inicio</button>
-        </div>
-    </div>
-
     <header>
         <div class="container">
             <div class="header-content">
@@ -363,7 +300,6 @@
                 <nav>
                     <ul>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
-                        <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
                         <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Administradores</a></li>
                         <li><a href="tablapagos.php"><i class="fas fa-table"></i> Tabla Pagos</a></li>
                     </ul>
@@ -375,53 +311,54 @@
     <main class="container">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><i class="fas fa-money-bill-wave"></i> <span id="formTitle">Registrar Pago</span></h2>
+                <i class="fas fa-money-bill-wave fa-2x"></i>
+                <h2 class="card-title"><?php echo $isEditing ? 'Editar Pago' : 'Registrar Pago'; ?></h2>
             </div>
             <div class="card-content">
                 <form id="paymentForm">
+                    <input type="hidden" name="action" value="<?php echo $isEditing ? 'actualizar' : 'registrar'; ?>">
+                    <?php if ($isEditing): ?>
+                        <input type="hidden" name="id_pagos" value="<?php echo $pagoToEdit['id_pagos']; ?>">
+                    <?php endif; ?>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="id_pagos">ID Pagos:</label>
-                            <input type="text" id="id_pagos" name="id_pagos" required readonly>
-                        </div>
-                        <div class="form-group">
                             <label for="id_cliente">ID Cliente:</label>
-                            <input type="text" id="id_cliente" name="id_cliente" required>
-                            <span class="error-message" id="id_cliente_error"></span>
+                            <input type="text" id="id_cliente" name="id_cliente" required value="<?php echo $isEditing ? htmlspecialchars($pagoToEdit['id_cliente']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="id_admin">ID Admin:</label>
-                            <input type="text" id="id_admin" name="id_admin" required>
-                            <span class="error-message" id="id_admin_error"></span>
+                            <input type="text" id="id_admin" name="id_admin" required value="<?php echo $isEditing ? htmlspecialchars($pagoToEdit['id_admin']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="tipo_subscripcion">Tipo de Subscripción:</label>
                             <select id="tipo_subscripcion" name="tipo_subscripcion" required>
                                 <option value="">Seleccionar</option>
-                                <option value="mensualidad">Mensualidad</option>
-                                <option value="rutina">Rutina</option>
-                                <option value="semanal">Semanal</option>
-                                <option value="quincenal">Quincenal</option>
+                                <option value="mensualidad" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'mensualidad') ? 'selected' : ''; ?>>Mensualidad</option>
+                                <option value="rutina" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'rutina') ? 'selected' : ''; ?>>Rutina</option>
+                                <option value="semanal" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'semanal') ? 'selected' : ''; ?>>Semanal</option>
+                                <option value="quincenal" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'quincenal') ? 'selected' : ''; ?>>Quincenal</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="precio">Precio:</label>
-                            <input type="number" id="precio" name="precio" readonly>
+                            <input type="number" id="precio" name="precio" required value="<?php echo $isEditing ? htmlspecialchars($pagoToEdit['precio']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="duracion">Duración:</label>
-                            <input type="text" id="duracion" name="duracion" readonly>
+                            <input type="text" id="duracion" name="duracion" required value="<?php echo $isEditing ? htmlspecialchars($pagoToEdit['duracion']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="estado">Estado:</label>
                             <select id="estado" name="estado" required>
                                 <option value="">Seleccionar</option>
-                                <option value="pagado">Pagado</option>
-                                <option value="pendiente">Pendiente</option>
+                                <option value="pagado" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pagado') ? 'selected' : ''; ?>>Pagado</option>
+                                <option value="pendiente" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pendiente') ? 'selected' : ''; ?>>Pendiente</option>
                             </select>
                         </div>
                     </div>
-                    <button type="submit" id="submitBtn"><i class="fas fa-save"></i> <span id="submitBtnText">Registrar Pago</span></button>
+                    <button type="submit">
+                        <i class="fas fa-save"></i> <?php echo $isEditing ? 'Actualizar Pago' : 'Registrar Pago'; ?>
+                    </button>
                 </form>
             </div>
         </div>
@@ -429,120 +366,47 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-header bg-blue">
-                    <i class="fas fa-dollar-sign"></i>
+                    <i class="fas fa-dollar-sign fa-lg"></i>
                     <span>Total Recaudado</span>
                 </div>
                 <div class="stat-content" id="totalRecaudado">
-                    $0
+                    $<?php echo number_format($estadisticas['total_recaudado'], 2); ?>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-header bg-green">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-chart-line fa-lg"></i>
                     <span>Pagos del Mes</span>
                 </div>
                 <div class="stat-content" id="pagosMes">
-                    0
+                    <?php echo $estadisticas['pagos_mes']; ?>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-header bg-orange">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-clock fa-lg"></i>
                     <span>Pagos Pendientes</span>
                 </div>
                 <div class="stat-content" id="pagosPendientes">
-                    0
+                    <?php echo $estadisticas['pagos_pendientes']; ?>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const subscriptionData = {
-            mensualidad: { precio: 60000, duracion: '30 días' },
-            rutina: { precio: 10000, duracion: '24 horas' },
-            semanal: { precio: 30000, duracion: '7 días' },
-            quincenal: { precio: 40000, duracion: '15 días' }
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('paymentForm');
-            const idPagosInput = document.getElementById('id_pagos');
             const tipoSubscripcionSelect = document.getElementById('tipo_subscripcion');
             const precioInput = document.getElementById('precio');
             const duracionInput = document.getElementById('duracion');
-            const idClienteInput = document.getElementById('id_cliente');
-            const idAdminInput = document.getElementById('id_admin');
-            const idClienteError = document.getElementById('id_cliente_error');
-            const idAdminError = document.getElementById('id_admin_error');
-            const formTitle = document.getElementById('formTitle');
-            const submitBtn = document.getElementById('submitBtn');
-            const submitBtnText = document.getElementById('submitBtnText');
 
-            let pagos = JSON.parse(localStorage.getItem('pagos')) || [];
-            let editingPaymentId = null;
-
-            // Password popup functionality
-            const popup = document.getElementById('passwordPopup');
-            const passwordInput = document.getElementById('passwordInput');
-            const submitPassword = document.getElementById('submitPassword');
-            const errorMessage = document.getElementById('errorMessage');
-            const backButton = document.getElementById('backButton');
-
-            function showPopup() {
-                popup.style.display = 'flex';
-            }
-
-            function hidePopup() {
-                popup.style.display = 'none';
-            }
-
-            function checkPassword() {
-                const password = passwordInput.value;
-                if (password === '010203') {
-                    hidePopup();
-                    // Show the main content
-                    document.querySelector('main').style.display = 'block';
-                } else {
-                    errorMessage.textContent = 'Lo siento, no tienes acceso a esta función';
-                    backButton.style.display = 'block';
-                }
-            }
-
-            submitPassword.addEventListener('click', checkPassword);
-            passwordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    checkPassword();
-                }
-            });
-
-            backButton.addEventListener('click', function() {
-                window.location.href = 'administradores.php';
-            });
-
-            // Initially hide the main content and show the popup
-            document.querySelector('main').style.display = 'none';
-            showPopup();
-
-            // Check if we're in edit mode
-            const urlParams = new URLSearchParams(window.location.search);
-            const isEditing = urlParams.get('editar') === 'true';
-
-            if (isEditing) {
-                const paymentToEdit = JSON.parse(localStorage.getItem('pagoEditar'));
-                if (paymentToEdit) {
-                    fillFormWithPaymentData(paymentToEdit);
-                    editingPaymentId = paymentToEdit.id_pagos;
-                    formTitle.textContent = 'Editar Pago';
-                    submitBtnText.textContent = 'Actualizar Pago';
-                }
-            } else {
-                // Set the next available ID
-                const nextId = pagos.length > 0 ? Math.max(...pagos.map(p => parseInt(p.id_pagos) || 0)) + 1 : 1;
-                idPagosInput.value = nextId;
-            }
-
-            updateStats();
+            const subscriptionData = {
+                mensualidad: { precio: 60000, duracion: '30 días' },
+                rutina: { precio: 10000, duracion: '24 horas' },
+                semanal: { precio: 30000, duracion: '7 días' },
+                quincenal: { precio: 40000, duracion: '15 días' }
+            };
 
             tipoSubscripcionSelect.addEventListener('change', function() {
                 const selectedType = this.value;
@@ -556,85 +420,54 @@
                 }
             });
 
-            // Add input event listeners for real-time validation
-            idClienteInput.addEventListener('input', function() {
-                validateNumericInput(this, idClienteError);
-            });
-
-            idAdminInput.addEventListener('input', function() {
-                validateNumericInput(this, idAdminError);
-            });
-
-            function validateNumericInput(input, errorElement) {
-                if (!/^\d*$/.test(input.value)) {
-                    errorElement.textContent = 'Solo se permiten números.';
-                    input.value = input.value.replace(/[^\d]/g, '');
-                } else {
-                    errorElement.textContent = '';
-                }
-            }
-
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                // Final validation before submission
-                if (!/^\d+$/.test(idClienteInput.value)) {
-                    idClienteError.textContent = 'ID Cliente debe ser un número entero.';
-                    return;
-                }
-
-                if (!/^\d+$/.test(idAdminInput.value)) {
-                    idAdminError.textContent = 'ID Admin debe ser un número entero.';
+                if (!form.checkValidity()) {
+                    form.reportValidity();
                     return;
                 }
 
                 const formData = new FormData(form);
-                const paymentData = Object.fromEntries(formData.entries());
+                const action = formData.get('action');
+                const url = '../controlador/pagoscontroller.php';
 
-                if (isEditing) {
-                    // Update existing payment
-                    const index = pagos.findIndex(p => p.id_pagos == editingPaymentId);
-                    if (index !== -1) {
-                        pagos[index] = paymentData;
+                fetch(url, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        if (action === 'registrar') {
+                            form.reset();
+                            // Actualizar estadísticas
+                            actualizarEstadisticas();
+                        } else {
+                            window.location.href = 'tablapagos.php';
+                        }
+                    } else {
+                        alert('Error: ' + data.message);
                     }
-                } else {
-                    // Add new payment
-                    pagos.push(paymentData);
-                }
-
-                localStorage.setItem('pagos', JSON.stringify(pagos));
-                updateStats();
-
-                alert(isEditing ? 'Pago actualizado con éxito!' : 'Pago registrado con éxito!');
-                window.location.href = 'tablapagos.php';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al procesar la solicitud. Por favor, inténtelo de nuevo.');
+                });
             });
 
-            function fillFormWithPaymentData(payment) {
-                for (const [key, value] of Object.entries(payment)) {
-                    const input = document.getElementById(key);
-                    if (input) {
-                        input.value = value;
+            function actualizarEstadisticas() {
+                fetch('../controlador/pagoscontroller.php?action=obtenerEstadisticas')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalRecaudado').textContent = '$' + data.data.total_recaudado.toFixed(2);
+                        document.getElementById('pagosMes').textContent = data.data.pagos_mes;
+                        document.getElementById('pagosPendientes').textContent = data.data.pagos_pendientes;
                     }
-                }
-                // Trigger change event on tipo_subscripcion to update precio and duracion
-                tipoSubscripcionSelect.dispatchEvent(new Event('change'));
-            }
-
-            function updateStats() {
-                const totalRecaudado = pagos.reduce((sum, pago) => sum + (parseInt(pago.precio) || 0), 0);
-                document.getElementById('totalRecaudado').textContent = `$${totalRecaudado}`;
-
-                const currentDate = new Date();
-                const currentMonth = currentDate.getMonth();
-                const currentYear = currentDate.getFullYear();
-                const pagosMes = pagos.filter(pago => {
-                    const pagoDate = new Date(pago.id_pagos); // Assuming id_pagos is a date string
-                    return !isNaN(pagoDate.getTime()) && pagoDate.getMonth() === currentMonth && pagoDate.getFullYear() === currentYear;
-                }).length;
-                document.getElementById('pagosMes').textContent = pagosMes;
-
-                const pagosPendientes = pagos.filter(pago => pago.estado === 'pendiente').length;
-                document.getElementById('pagosPendientes').textContent = pagosPendientes;
+                })
+                .catch(error => console.error('Error al actualizar estadísticas:', error));
             }
         });
     </script>

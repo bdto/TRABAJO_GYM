@@ -1,26 +1,28 @@
 <?php
 session_start();
+require_once __DIR__ . '/../controlador/admincontroller.php';
 
 $message = '';
+$controller = new AdminController();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'];
     $usuario = $_POST['usuario'];
     $plain_password = $_POST['password'];
-    $hashed_password = password_hash($plain_password, PASSWORD_BCRYPT);
 
-    if (!isset($_SESSION['administrators'])) {
-        $_SESSION['administrators'] = [];
-    }
-
-    $_SESSION['administrators'][] = [
-        'admin_id' => $id,
-        'nombre' => $usuario,
-        'password' => $hashed_password,
-        'plain_password' => $plain_password
+    $datos = [
+        'id' => $id,
+        'usuario' => $usuario,
+        'password' => $plain_password
     ];
 
-    $message = "<p class='success'>Registro exitoso. <a href='login.php'>Iniciar sesión</a></p>";
+    $result = $controller->registrarAdmin($datos);
+
+    if ($result['success']) {
+        $message = "<p class='success'>{$result['message']} <a href='login.php'>Iniciar sesión</a></p>";
+    } else {
+        $message = "<p class='error'>{$result['message']}</p>";
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -347,6 +349,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             ?>
             <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                <input type="hidden" name="action" value="registrar">
                 <div class="form-group">
                     <label for="id"><i class="fas fa-id-card"></i> ID de Administrador</label>
                     <input type="text" id="id" name="id" required value="<?php echo isset($_POST['id']) ? htmlspecialchars($_POST['id']) : ''; ?>">

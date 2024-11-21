@@ -1,3 +1,30 @@
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+require_once '../controlador/usuarioscontroller.php';
+
+$controller = new UsuariosController();
+
+// Verificar si el usuario ha iniciado sesión
+if (!isset($_SESSION['usuario'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Obtener usuarios para las estadísticas
+$usuarios = $controller->obtenerUsuarios();
+$totalUsuarios = count($usuarios);
+$usuariosActivos = count(array_filter($usuarios, function($u) { return $u['estado'] === 'activo'; }));
+$usuariosInactivos = $totalUsuarios - $usuariosActivos;
+
+// Verificar si estamos en modo de edición
+$isEditing = isset($_GET['editar']) && $_GET['editar'] === 'true';
+$userToEdit = null;
+if ($isEditing && isset($_GET['id'])) {
+    $userToEdit = $controller->obtenerUsuario($_GET['id']);
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,18 +33,18 @@
     <title>Usuarios - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<style>
+    <style>
         :root {
             --primary-color: #1a202c;
-            --secondary-color: #f472b6;
-            --accent-color: #db2777;
+            --secondary-color: #db2777;
+            --accent-color: #f472b6;
             --text-color: #333;
             --background-color: #f5f5f5;
             --card-background: #ffffff;
             --border-color: #e5e7eb;
             --success-color: #48bb78;
             --warning-color: #ed8936;
-            --danger-color: #e53e3e;
+            --danger-color: #ef4444;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --transition: all 0.3s ease;
         }
@@ -68,7 +95,7 @@
             height: 50px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--secondary-color);
+            border: 2px solid var(--accent-color);
             transition: var(--transition);
         }
 
@@ -79,8 +106,7 @@
         .logo h1 {
             font-size: 1.5rem;
             font-weight: bold;
-            color: var(--secondary-color);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            color: var(--accent-color);
         }
 
         nav ul {
@@ -126,7 +152,7 @@
 
         .card-header {
             background-color: var(--secondary-color);
-            color: var(--primary-color);
+            color: #fff;
             padding: 1.5rem;
             display: flex;
             align-items: center;
@@ -175,7 +201,7 @@
         }
 
         button {
-            background-color: var(--accent-color);
+            background-color: var(--secondary-color);
             color: #fff;
             padding: 1rem 2rem;
             border: none;
@@ -194,9 +220,9 @@
         }
 
         button:hover {
-            background-color: var(--secondary-color);
+            background-color: var(--accent-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .stats-grid {
@@ -237,57 +263,14 @@
             color: var(--primary-color);
         }
 
-        .bg-blue { background-color: var(--accent-color); color: #fff; }
+        .bg-blue { background-color: var(--secondary-color); color: #fff; }
         .bg-green { background-color: var(--success-color); color: #fff; }
         .bg-red { background-color: var(--danger-color); color: #fff; }
 
-        /* Password protection styles */
-        .password-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .password-container {
-            background-color: var(--card-background);
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: var(--shadow);
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .password-container h2 {
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .password-container input {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 2px solid var(--border-color);
-            border-radius: 0.5rem;
-            font-size: 1rem;
-        }
-
-        .password-container button {
-            width: 100%;
-            margin-top: 1rem;
-        }
-
         .error-message {
             color: var(--danger-color);
-            text-align: center;
-            margin-top: 1rem;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
 
         @media (max-width: 768px) {
@@ -312,16 +295,6 @@
     </style>
 </head>
 <body>
-    <div id="passwordOverlay" class="password-overlay">
-        <div class="password-container">
-            <h2>Ingrese la contraseña</h2>
-            <input type="password" id="passwordInput" placeholder="Contraseña">
-            <button id="submitPassword">Ingresar</button>
-            <p id="errorMessage" class="error-message"></p>
-            <button id="backButton" style="display: none;">Inicio</button>
-        </div>
-    </div>
-
     <header>
         <div class="container">
             <div class="header-content">
@@ -331,7 +304,6 @@
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
                         <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Administradores</a></li>
                         <li><a href="tablausuarios.php"><i class="fas fa-table"></i> Tabla Usuarios</a></li>
@@ -345,50 +317,54 @@
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-user-plus fa-2x"></i>
-                <h2 class="card-title" id="formTitle">Registrar Usuario</h2>
+                <h2 class="card-title" id="formTitle"><?php echo $isEditing ? 'Editar Usuario' : 'Registrar Usuario'; ?></h2>
             </div>
             <div class="card-content">
                 <form id="userForm">
+                    <input type="hidden" name="action" value="<?php echo $isEditing ? 'actualizar' : 'registrar'; ?>">
+                    <?php if ($isEditing): ?>
+                        <input type="hidden" name="id" value="<?php echo $userToEdit['id_cliente']; ?>">
+                    <?php endif; ?>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="id_cliente">ID Cliente:</label>
-                            <input type="text" id="id_cliente" name="id_cliente" required readonly>
-                        </div>
-                        <div class="form-group">
                             <label for="nombre">Nombre:</label>
-                            <input type="text" id="nombre" name="nombre" required pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras y espacios">
+                            <input type="text" id="nombre" name="nombre" required pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras y espacios" value="<?php echo $isEditing ? htmlspecialchars($userToEdit['nombre']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="apellido">Apellido:</label>
-                            <input type="text" id="apellido" name="apellido" required pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras y espacios">
+                            <input type="text" id="apellido" name="apellido" required pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras y espacios" value="<?php echo $isEditing ? htmlspecialchars($userToEdit['apellido']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="telefono">Teléfono:</label>
-                            <input type="tel" id="telefono" name="telefono" required pattern="[0-9]{10}" title="Debe contener exactamente 10 dígitos numéricos" maxlength="10">
+                            <input type="tel" id="telefono" name="telefono" required pattern="[0-9]{10}" title="Debe contener exactamente 10 dígitos numéricos" maxlength="10" value="<?php echo $isEditing ? htmlspecialchars($userToEdit['telefono']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="genero">Género:</label>
                             <select id="genero" name="genero" required>
                                 <option value="">Seleccionar</option>
-                                <option value="masculino">Masculino</option>
-                                <option value="femenino">Femenino</option>
-                                <option value="otro">Otro</option>
+                                <option value="masculino" <?php echo ($isEditing && $userToEdit['genero'] === 'masculino') ? 'selected' : ''; ?>>Masculino</option>
+                                <option value="femenino" <?php echo ($isEditing && $userToEdit['genero'] === 'femenino') ? 'selected' : ''; ?>>Femenino</option>
+                                <option value="otro" <?php echo ($isEditing && $userToEdit['genero'] === 'otro') ? 'selected' : ''; ?>>Otro</option>
                             </select>
                         </div>
+                        <?php if (!$isEditing): ?>
                         <div class="form-group">
                             <label for="f_registro">Fecha de Registro:</label>
                             <input type="date" id="f_registro" name="f_registro" required>
                         </div>
+                        <?php endif; ?>
                         <div class="form-group">
                             <label for="estado">Estado:</label>
                             <select id="estado" name="estado" required>
                                 <option value="">Seleccionar</option>
-                                <option value="activo">Activo</option>
-                                <option value="inactivo">Inactivo</option>
+                                <option value="activo" <?php echo ($isEditing && $userToEdit['estado'] === 'activo') ? 'selected' : ''; ?>>Activo</option>
+                                <option value="inactivo" <?php echo ($isEditing && $userToEdit['estado'] === 'inactivo') ? 'selected' : ''; ?>>Inactivo</option>
                             </select>
                         </div>
                     </div>
-                    <button type="submit" id="submitBtn"><i class="fas fa-save"></i> Registrar Usuario</button>
+                    <button type="submit" id="submitBtn">
+                        <i class="fas fa-save"></i> <?php echo $isEditing ? 'Actualizar Usuario' : 'Registrar Usuario'; ?>
+                    </button>
                 </form>
             </div>
         </div>
@@ -400,7 +376,7 @@
                     <span>Total Usuarios</span>
                 </div>
                 <div class="stat-content" id="totalUsuarios">
-                    0
+                    <?php echo $totalUsuarios; ?>
                 </div>
             </div>
             <div class="stat-card">
@@ -409,7 +385,7 @@
                     <span>Usuarios Activos</span>
                 </div>
                 <div class="stat-content" id="usuariosActivos">
-                    0
+                    <?php echo $usuariosActivos; ?>
                 </div>
             </div>
             <div class="stat-card">
@@ -418,7 +394,7 @@
                     <span>Usuarios Inactivos</span>
                 </div>
                 <div class="stat-content" id="usuariosInactivos">
-                    0
+                    <?php echo $usuariosInactivos; ?>
                 </div>
             </div>
         </div>
@@ -426,139 +402,55 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const passwordOverlay = document.getElementById('passwordOverlay');
-            const passwordInput = document.getElementById('passwordInput');
-            const submitPassword = document.getElementById('submitPassword');
-            const errorMessage = document.getElementById('errorMessage');
-            const backButton = document.getElementById('backButton');
-            const mainContent = document.querySelector('main');
-
             const form = document.getElementById('userForm');
-            const idClienteInput = document.getElementById('id_cliente');
-            const nombreInput = document.getElementById('nombre');
-            const apellidoInput = document.getElementById('apellido');
-            const telefonoInput = document.getElementById('telefono');
-            const totalUsuariosElement = document.getElementById('totalUsuarios');
-            const usuariosActivosElement = document.getElementById('usuariosActivos');
-            const usuariosInactivosElement = document.getElementById('usuariosInactivos');
-            const formTitle = document.getElementById('formTitle');
             const submitBtn = document.getElementById('submitBtn');
-
-            let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
-            let editingUserId = null;
-
-            // Initially hide the main content
-            mainContent.style.display = 'none';
-
-            submitPassword.addEventListener('click', checkPassword);
-            passwordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    checkPassword();
-                }
-            });
-
-            backButton.addEventListener('click', function() {
-                window.location.href = 'administradores.php';
-            });
-
-            function checkPassword() {
-                const password = passwordInput.value;
-                if (password === '010203') {
-                    passwordOverlay.style.display = 'none';
-                    mainContent.style.display = 'block';
-                } else {
-                    errorMessage.textContent = 'Contraseña incorrecta';
-                    backButton.style.display = 'block';
-                }
-            }
-
-            // Check if we're in edit mode
-            const urlParams = new URLSearchParams(window.location.search);
-            const isEditing = urlParams.get('editar') === 'true';
-
-            if (isEditing) {
-                const userToEdit = JSON.parse(localStorage.getItem('usuarioEditar'));
-                if (userToEdit) {
-                    fillFormWithUserData(userToEdit);
-                    editingUserId = userToEdit.id_cliente;
-                    formTitle.textContent = 'Editar Usuario';
-                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Actualizar Usuario';
-                }
-            } else {
-                idClienteInput.value = usuarios.length > 0 ? Math.max(...usuarios.map(u => parseInt(u.id_cliente))) + 1 : 1;
-            }
-
-            updateStats();
-
-            // Input validations
-            nombreInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
-            });
-
-            apellidoInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
-            });
-
-            telefonoInput.addEventListener('input', function() {
-                this.value = this.value.replace(/\D/g, '').slice(0, 10);
-            });
 
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
+                submitBtn.disabled = true;
 
                 const formData = new FormData(form);
-                const userData = Object.fromEntries(formData.entries());
+                const action = formData.get('action');
+                const url = '../controlador/usuarioscontroller.php';
 
-                if (isEditing) {
-                    // Update existing user
-                    const index = usuarios.findIndex(u => u.id_cliente === editingUserId);
-                    if (index !== -1) {
-                        usuarios[index] = userData;
-                        localStorage.setItem('usuarios', JSON.stringify(usuarios));
-                        alert('Usuario actualizado exitosamente.');
-                        window.location.href = 'tablausuarios.php';
+                fetch(url, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        if (action === 'registrar') {
+                            form.reset();
+                        } else {
+                            window.location.href = 'tablausuarios.php';
+                        }
+                        actualizarEstadisticas();
+                    } else {
+                        alert('Error: ' + data.message);
                     }
-                } else {
-                    // Add new user
-                    const isDuplicate = usuarios.some(usuario => 
-                        usuario.nombre === userData.nombre &&
-                        usuario.apellido === userData.apellido &&
-                        usuario.telefono === userData.telefono
-                    );
-
-                    if (isDuplicate) {
-                        alert('Ya existe un registro con estos datos.');
-                        return;
-                    }
-
-                    usuarios.push(userData);
-                    localStorage.setItem('usuarios', JSON.stringify(usuarios));
-                    alert('Usuario registrado exitosamente.');
-                    form.reset();
-                    idClienteInput.value = parseInt(idClienteInput.value) + 1;
-                }
-
-                updateStats();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al procesar la solicitud. Por favor, inténtelo de nuevo.');
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                });
             });
 
-            function updateStats() {
-                totalUsuariosElement.textContent = usuarios.length;
-                usuariosActivosElement.textContent = usuarios.filter(u => u.estado === 'activo').length;
-                usuariosInactivosElement.textContent = usuarios.filter(u => u.estado === 'inactivo').length;
-            }
-
-            function fillFormWithUserData(user) {
-                for (const [key, value] of Object.entries(user)) {
-                    const input = document.getElementById(key);
-                    if (input) {
-                        input.value = value;
+            function actualizarEstadisticas() {
+                fetch('../controlador/usuarioscontroller.php?action=obtenerEstadisticas')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalUsuarios').textContent = data.data.total;
+                        document.getElementById('usuariosActivos').textContent = data.data.activos;
+                        document.getElementById('usuariosInactivos').textContent = data.data.inactivos;
                     }
-                }
+                })
+                .catch(error => console.error('Error al actualizar estadísticas:', error));
             }
         });
     </script>
