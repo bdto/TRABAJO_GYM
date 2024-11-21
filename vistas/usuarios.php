@@ -15,7 +15,9 @@ if (!isset($_SESSION['usuario'])) {
 // Obtener usuarios para las estadísticas
 $usuarios = $controller->obtenerUsuarios();
 $totalUsuarios = count($usuarios);
-$usuariosActivos = count(array_filter($usuarios, function($u) { return $u['estado'] === 'activo'; }));
+$usuariosActivos = count(array_filter($usuarios, function ($u) {
+    return $u['estado'] === 'activo';
+}));
 $usuariosInactivos = $totalUsuarios - $usuariosActivos;
 
 // Verificar si estamos en modo de edición
@@ -27,6 +29,7 @@ if ($isEditing && isset($_GET['id'])) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -185,7 +188,8 @@ if ($isEditing && isset($_GET['id'])) {
             color: var(--primary-color);
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 0.75rem;
             border: 2px solid var(--border-color);
@@ -194,7 +198,8 @@ if ($isEditing && isset($_GET['id'])) {
             transition: var(--transition);
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--secondary-color);
             box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2);
@@ -222,7 +227,7 @@ if ($isEditing && isset($_GET['id'])) {
         button:hover {
             background-color: var(--accent-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .stats-grid {
@@ -263,9 +268,20 @@ if ($isEditing && isset($_GET['id'])) {
             color: var(--primary-color);
         }
 
-        .bg-blue { background-color: var(--secondary-color); color: #fff; }
-        .bg-green { background-color: var(--success-color); color: #fff; }
-        .bg-red { background-color: var(--danger-color); color: #fff; }
+        .bg-blue {
+            background-color: var(--secondary-color);
+            color: #fff;
+        }
+
+        .bg-green {
+            background-color: var(--success-color);
+            color: #fff;
+        }
+
+        .bg-red {
+            background-color: var(--danger-color);
+            color: #fff;
+        }
 
         .error-message {
             color: var(--danger-color);
@@ -294,6 +310,7 @@ if ($isEditing && isset($_GET['id'])) {
         }
     </style>
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -304,8 +321,8 @@ if ($isEditing && isset($_GET['id'])) {
                 </div>
                 <nav>
                     <ul>
+                        <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Inicio</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
-                        <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Administradores</a></li>
                         <li><a href="tablausuarios.php"><i class="fas fa-table"></i> Tabla Usuarios</a></li>
                     </ul>
                 </nav>
@@ -348,10 +365,10 @@ if ($isEditing && isset($_GET['id'])) {
                             </select>
                         </div>
                         <?php if (!$isEditing): ?>
-                        <div class="form-group">
-                            <label for="f_registro">Fecha de Registro:</label>
-                            <input type="date" id="f_registro" name="f_registro" required>
-                        </div>
+                            <div class="form-group">
+                                <label for="f_registro">Fecha de Registro:</label>
+                                <input type="date" id="f_registro" name="f_registro" required>
+                            </div>
                         <?php endif; ?>
                         <div class="form-group">
                             <label for="estado">Estado:</label>
@@ -414,45 +431,46 @@ if ($isEditing && isset($_GET['id'])) {
                 const url = '../controlador/usuarioscontroller.php';
 
                 fetch(url, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        if (action === 'registrar') {
-                            form.reset();
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            if (action === 'registrar') {
+                                form.reset();
+                            } else {
+                                window.location.href = 'tablausuarios.php';
+                            }
+                            actualizarEstadisticas();
                         } else {
-                            window.location.href = 'tablausuarios.php';
+                            alert('Error: ' + data.message);
                         }
-                        actualizarEstadisticas();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Ocurrió un error al procesar la solicitud. Por favor, inténtelo de nuevo.');
-                })
-                .finally(() => {
-                    submitBtn.disabled = false;
-                });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ocurrió un error al procesar la solicitud. Por favor, inténtelo de nuevo.');
+                    })
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                    });
             });
 
             function actualizarEstadisticas() {
                 fetch('../controlador/usuarioscontroller.php?action=obtenerEstadisticas')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('totalUsuarios').textContent = data.data.total;
-                        document.getElementById('usuariosActivos').textContent = data.data.activos;
-                        document.getElementById('usuariosInactivos').textContent = data.data.inactivos;
-                    }
-                })
-                .catch(error => console.error('Error al actualizar estadísticas:', error));
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('totalUsuarios').textContent = data.data.total;
+                            document.getElementById('usuariosActivos').textContent = data.data.activos;
+                            document.getElementById('usuariosInactivos').textContent = data.data.inactivos;
+                        }
+                    })
+                    .catch(error => console.error('Error al actualizar estadísticas:', error));
             }
         });
     </script>
 </body>
+
 </html>

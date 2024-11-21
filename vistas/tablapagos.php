@@ -292,7 +292,7 @@ $pagos = $controller->obtenerPagos();
                     <ul>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
-                        <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Administradores</a></li>
+                        <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Inicio</a></li>
                     </ul>
                 </nav>
             </div>

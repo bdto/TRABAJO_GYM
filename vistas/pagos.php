@@ -299,8 +299,8 @@ if ($isEditing && isset($_GET['id'])) {
                 </div>
                 <nav>
                     <ul>
+                    <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Inicio</a></li>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
-                        <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Administradores</a></li>
                         <li><a href="tablapagos.php"><i class="fas fa-table"></i> Tabla Pagos</a></li>
                     </ul>
                 </nav>

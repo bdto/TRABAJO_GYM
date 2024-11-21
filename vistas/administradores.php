@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,7 @@
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<style>
+    <style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #f472b6;
@@ -23,7 +24,8 @@
             box-sizing: border-box;
         }
 
-        body, html {
+        body,
+        html {
             height: 100%;
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
@@ -40,7 +42,7 @@
             background-color: var(--primary-color);
             color: var(--white);
             padding: 1.25rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -86,25 +88,34 @@
         nav ul {
             display: flex;
             list-style: none;
-            gap: 2.5rem;
+            gap: 1.5rem;
         }
 
-        nav a, .logout-btn {
+        nav a,
+        .logout-btn,
+        .btn-download {
             color: var(--white);
             text-decoration: none;
             transition: var(--transition);
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
             font-weight: 600;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            background-color: var(--secondary-color);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
         }
 
-        nav a:hover, .logout-btn:hover {
-            background-color: var(--secondary-color);
-            color: var(--primary-color);
+        nav a:hover,
+        .logout-btn:hover,
+        .btn-download:hover {
+            background-color: #e55a9d;
+            color: var(--white);
             transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         main {
@@ -141,7 +152,7 @@
             margin-bottom: 1.5rem;
             line-height: 1.2;
             font-weight: 800;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .hero-text p {
@@ -165,13 +176,13 @@
             position: relative;
             overflow: hidden;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             transition: var(--transition);
         }
 
         .hero-image-container:hover {
             transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
         }
 
         .hero-image-cut {
@@ -200,22 +211,6 @@
             clip-path: polygon(0 0, 50% 0, 0 100%);
         }
 
-        .logout-btn {
-            background-color: transparent;
-            border: 2px solid var(--secondary-color);
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 0.75rem 1.5rem;
-        }
-
-        .logout-btn i {
-            transition: var(--transition);
-        }
-
-        .logout-btn:hover i {
-            transform: translateX(3px);
-        }
-
         .modal {
             display: none;
             position: fixed;
@@ -224,7 +219,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.7);
+            background-color: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px);
         }
 
@@ -235,7 +230,7 @@
             border-radius: 15px;
             max-width: 450px;
             text-align: center;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
             transform: translateY(20px);
             animation: modalSlideIn 0.3s ease forwards;
         }
@@ -297,6 +292,10 @@
             transform: translateY(-2px);
         }
 
+        .download-container {
+            margin-right: 1rem;
+        }
+
         @media (max-width: 1200px) {
             .container {
                 padding: 0 1.5rem;
@@ -352,9 +351,15 @@
                 margin: 30% auto;
                 padding: 2rem;
             }
+
+            .download-container {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
         }
     </style>
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -365,11 +370,16 @@
                 </div>
                 <nav id="main-nav">
                     <ul>
+                        <li class="download-container">
+                            <a href="../imagenes/MANUAL%20DE%20USUARIO-GYM%20MANAGER.pdf" class="btn-download" download="Manual_Usuario_Gym_Manager.pdf">
+                                <i class="fas fa-download"></i> Descargar Manual
+                            </a>
+                        </li>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> USUARIOS</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> PAGOS</a></li>
                         <li><button id="logoutBtn" class="logout-btn">
-                            <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
-                        </button></li>
+                                <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
+                            </button></li>
                     </ul>
                 </nav>
             </div>

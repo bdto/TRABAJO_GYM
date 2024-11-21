@@ -38,6 +38,7 @@ if ($result) {
 // Cerrar la conexión
 $conn->close();
 ?>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -84,6 +85,9 @@ $conn->close();
             color: #fff;
             padding: 1rem 0;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .header-content {
@@ -179,7 +183,7 @@ $conn->close();
             border-radius: 0.25rem;
             font-size: 1rem;
             min-width: 200px;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .search-input:focus {
@@ -195,7 +199,7 @@ $conn->close();
             border: none;
             border-radius: 0.25rem;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
             font-size: 1rem;
             display: flex;
             align-items: center;
@@ -205,6 +209,7 @@ $conn->close();
         .btn:hover {
             background-color: var(--accent-color);
             transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .btn-success {
@@ -217,11 +222,15 @@ $conn->close();
 
         .table-container {
             overflow-x: auto;
+            background-color: var(--card-background);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             min-width: 600px;
         }
 
@@ -235,6 +244,9 @@ $conn->close();
             background-color: var(--hover-color);
             font-weight: bold;
             color: var(--secondary-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         tr:hover {
@@ -249,11 +261,34 @@ $conn->close();
             border-radius: 0.25rem;
             cursor: pointer;
             font-size: 0.875rem;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
         }
 
         .edit-btn:hover {
             background-color: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+            border-radius: 0.25rem;
+        }
+
+        .pagination button:hover, .pagination button.active {
+            background-color: var(--secondary-color);
+            color: #fff;
             transform: translateY(-2px);
         }
 
@@ -288,9 +323,9 @@ $conn->close();
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="../index.php">Inicio</a></li>
-                        <li><a href="usuarios.php">Usuarios</a></li>
-                        <li><a href="pagos.php">Pagos</a></li>
+                        <li><a href="administradores.php"><i class="fas fa-home"></i> Inicio</a></li>
+                        <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
+                        <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
                     </ul>
                 </nav>
             </div>
@@ -304,11 +339,12 @@ $conn->close();
                     <span>Usuarios Registrados</span>
                 </div>
                 <div class="search-container">
-                    <input class="search-input" type="text" placeholder="Buscar usuarios" />
-                    <button class="btn">Buscar</button>
+                    <input id="searchInput" class="search-input" type="text" placeholder="Buscar usuarios" />
+                    <button class="btn" onclick="searchUsers()"><i class="fas fa-search"></i> Buscar</button>
+                    <button class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Exportar a Excel</button>
                 </div>
                 <div class="table-container">
-                    <table>
+                    <table id="usersTable">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -331,14 +367,107 @@ $conn->close();
                                     <td><?= htmlspecialchars($usuario['genero']) ?></td>
                                     <td><?= htmlspecialchars($usuario['f_registro']) ?></td>
                                     <td><?= htmlspecialchars($usuario['estado']) ?></td>
-                                    <td><button class="edit-btn" onclick="window.location.href='usuarios.php?editar=true&id=<?= $usuario['id_cliente'] ?>'">Editar</button></td>
+                                    <td><button class="edit-btn" onclick="editUser(<?= $usuario['id_cliente'] ?>)"><i class="fas fa-edit"></i> Editar</button></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
+                <div id="pagination" class="pagination">
+                    <!-- Pagination buttons will be added here by JavaScript -->
+                </div>
             </div>
         </div>
     </main>
+
+    <script>
+        const itemsPerPage = 10;
+        let currentPage = 1;
+        let filteredUsers = [];
+
+        function searchUsers() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('usersTable');
+            const rows = table.getElementsByTagName('tr');
+
+            filteredUsers = [];
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let shouldShow = false;
+
+                for (let j = 0; j < cells.length; j++) {
+                    const cell = cells[j];
+                    if (cell.textContent.toLowerCase().indexOf(filter) > -1) {
+                        shouldShow = true;
+                        break;
+                    }
+                }
+
+                if (shouldShow) {
+                    filteredUsers.push(row);
+                }
+            }
+
+            showPage(1);
+        }
+
+        function showPage(page) {
+            const table = document.getElementById('usersTable');
+            const rows = table.getElementsByTagName('tr');
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+
+            for (let i = 1; i < rows.length; i++) {
+                rows[i].style.display = 'none';
+            }
+
+            for (let i = startIndex; i < endIndex && i < filteredUsers.length; i++) {
+                filteredUsers[i].style.display = '';
+            }
+
+            updatePagination(page);
+        }
+
+        function updatePagination(currentPage) {
+            const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+            const paginationElement = document.getElementById('pagination');
+            paginationElement.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.onclick = function() { showPage(i); };
+                if (i === currentPage) {
+                    button.classList.add('active');
+                }
+                paginationElement.appendChild(button);
+            }
+        }
+
+        function editUser(userId) {
+            window.location.href = `usuarios.php?editar=true&id=${userId}`;
+        }
+
+        function exportToExcel() {
+            const table = document.getElementById('usersTable');
+            const html = table.outerHTML;
+            const url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+            const downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            downloadLink.href = url;
+            downloadLink.download = 'usuarios_gym_tina.xls';
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Initialize the table
+        document.addEventListener('DOMContentLoaded', function() {
+            filteredUsers = Array.from(document.getElementById('usersTable').getElementsByTagName('tr')).slice(1);
+            showPage(1);
+        });
+    </script>
 </body>
 </html>
