@@ -11,11 +11,15 @@
     <style>
         :root {
             --primary-color: #1a202c;
-            --secondary-color: #f472b6;
+            --secondary-color: #db2777;
+            --accent-color: #f472b6;
             --text-color: #333;
             --background-color: #f5f5f5;
             --white: #fff;
-            --transition: all 0.3s ease;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         }
 
         * {
@@ -27,7 +31,7 @@
         body,
         html {
             height: 100%;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
             line-height: 1.6;
             color: var(--text-color);
             background-color: var(--background-color);
@@ -42,7 +46,7 @@
             background-color: var(--primary-color);
             color: var(--white);
             padding: 1.25rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -70,7 +74,7 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            border: 2px solid var(--secondary-color);
+            border: 2px solid var(--accent-color);
             transition: var(--transition);
         }
 
@@ -83,6 +87,7 @@
             font-size: 1.8rem;
             font-weight: 700;
             letter-spacing: 0.5px;
+            color: var(--accent-color);
         }
 
         nav ul {
@@ -98,7 +103,7 @@
             text-decoration: none;
             transition: var(--transition);
             padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            border-radius: 9999px;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
@@ -107,15 +112,16 @@
             border: none;
             cursor: pointer;
             font-size: 1rem;
+            box-shadow: var(--shadow-sm);
         }
 
         nav a:hover,
         .logout-btn:hover,
         .btn-download:hover {
-            background-color: #e55a9d;
-            color: var(--white);
+            background-color: var(--accent-color);
+            color: var(--primary-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
         }
 
         main {
@@ -148,7 +154,7 @@
 
         .hero-text h2 {
             font-size: 3.5rem;
-            color: var(--secondary-color);
+            color: var(--accent-color);
             margin-bottom: 1.5rem;
             line-height: 1.2;
             font-weight: 800;
@@ -176,7 +182,7 @@
             position: relative;
             overflow: hidden;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-lg);
             transition: var(--transition);
         }
 
@@ -263,7 +269,7 @@
             padding: 0.875rem 2rem;
             cursor: pointer;
             border: none;
-            border-radius: 8px;
+            border-radius: 9999px;
             font-size: 1rem;
             font-weight: 600;
             transition: var(--transition);
@@ -278,7 +284,7 @@
         }
 
         .confirm-btn:hover {
-            background-color: #e55a9d;
+            background-color: var(--accent-color);
             transform: translateY(-2px);
         }
 
