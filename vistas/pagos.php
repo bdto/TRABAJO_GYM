@@ -327,7 +327,7 @@ if ($isEditing && isset($_GET['id'])) {
                         </div>
                         <div class="form-group">
                             <label for="id_admin">ID Admin:</label>
-                            <input type="text" id="id_admin" name="id_admin" required value="<?php echo $isEditing ? htmlspecialchars($pagoToEdit['id_admin']) : ''; ?>">
+                            <input type="text" id="id_admin" name="id_admin" required value="<?php echo $_SESSION['id_admin']; ?>" readonly>
                         </div>
                         <div class="form-group">
                             <label for="tipo_subscripcion">Tipo de Subscripción:</label>
@@ -345,15 +345,19 @@ if ($isEditing && isset($_GET['id'])) {
                         </div>
                         <div class="form-group">
                             <label for="duracion">Duración:</label>
-                            <input type="text" id="duracion" name="duracion" required value="<?php echo $isEditing ? htmlspecialchars($pagoToEdit['duracion']) : ''; ?>">
+                            <input type="number" id="duracion" name="duracion" required value="<?php echo $isEditing ? htmlspecialchars($pagoToEdit['duracion']) : ''; ?>">
                         </div>
                         <div class="form-group">
                             <label for="estado">Estado:</label>
                             <select id="estado" name="estado" required>
                                 <option value="">Seleccionar</option>
-                                <option value="pagado" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pagado') ? 'selected' : ''; ?>>Pagado</option>
-                                <option value="pendiente" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pendiente') ? 'selected' : ''; ?>>Pendiente</option>
+                                <option value="activo" <?php echo ($isEditing && $pagoToEdit['estado'] === 'activo') ? 'selected' : ''; ?>>Activo</option>
+                                <option value="inactivo" <?php echo ($isEditing && $pagoToEdit['estado'] === 'inactivo') ? 'selected' : ''; ?>>Inactivo</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha_pago">Fecha de Pago:</label>
+                            <input type="date" id="fecha_pago" name="fecha_pago" required value="<?php echo $isEditing ? date('Y-m-d', strtotime($pagoToEdit['fecha_pago'])) : date('Y-m-d'); ?>">
                         </div>
                     </div>
                     <button type="submit">
@@ -401,11 +405,14 @@ if ($isEditing && isset($_GET['id'])) {
             const precioInput = document.getElementById('precio');
             const duracionInput = document.getElementById('duracion');
 
+            // Set the id_admin value from the session
+            document.getElementById('id_admin').value = '<?php echo $_SESSION['id_admin']; ?>';
+
             const subscriptionData = {
-                mensualidad: { precio: 60000, duracion: '30 días' },
-                rutina: { precio: 10000, duracion: '24 horas' },
-                semanal: { precio: 30000, duracion: '7 días' },
-                quincenal: { precio: 40000, duracion: '15 días' }
+                mensualidad: { precio: 60000, duracion: 30 },
+                rutina: { precio: 10000, duracion: 1 },
+                semanal: { precio: 30000, duracion: 7 },
+                quincenal: { precio: 40000, duracion: 15 }
             };
 
             tipoSubscripcionSelect.addEventListener('change', function() {

@@ -55,12 +55,30 @@ class Pagos {
     public function obtenerPagos() {
         try {
             $query = "SELECT * FROM pagos ORDER BY id_pagos DESC";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error al obtener los pagos: " . $e->getMessage());
+            $result = $this->conn->query($query);
+            return $result->fetchAll();
+        } catch (Exception $e) {
+            error_log("Error al obtener pagos: " . $e->getMessage());
             return [];
+        }
+    }
+
+    public function obtenerNombreCliente($id_cliente) {
+        try {
+            $query = "SELECT nombre FROM usuarios WHERE id = :id_cliente";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id_cliente', $id_cliente, PDO::PARAM_INT);
+            $stmt->execute();
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($resultado) {
+                return $resultado['nombre'];
+            } else {
+                error_log("Cliente no encontrado para ID: " . $id_cliente);
+                return 'Cliente no encontrado';
+            }
+        } catch (PDOException $e) {
+            error_log("Error al obtener el nombre del cliente: " . $e->getMessage());
+            return 'Error al obtener el nombre';
         }
     }
 

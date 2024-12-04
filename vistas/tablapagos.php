@@ -313,11 +313,13 @@ $pagos = $controller->obtenerPagos();
                         <tr>
                             <th>ID Pagos</th>
                             <th>ID Cliente</th>
+                            <th>Nombre Cliente</th>
                             <th>ID Admin</th>
                             <th>Tipo de Subscripción</th>
                             <th>Precio</th>
                             <th>Duración</th>
                             <th>Estado</th>
+                            <th>Fecha de Pago</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -326,11 +328,18 @@ $pagos = $controller->obtenerPagos();
                             <tr>
                                 <td><?php echo htmlspecialchars($pago['id_pagos']); ?></td>
                                 <td><?php echo htmlspecialchars($pago['id_cliente']); ?></td>
+                                <td>
+                                    <?php
+                                    $nombreCliente = $controller->obtenerNombreCliente($pago['id_cliente']);
+                                    echo htmlspecialchars($nombreCliente);
+                                    ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($pago['id_admin']); ?></td>
                                 <td><?php echo htmlspecialchars($pago['tipo_subscripcion']); ?></td>
                                 <td>$<?php echo number_format($pago['precio'], 2); ?></td>
                                 <td><?php echo htmlspecialchars($pago['duracion']); ?></td>
                                 <td><?php echo htmlspecialchars($pago['estado']); ?></td>
+                                <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))); ?></td>
                                 <td>
                                     <button onclick="editarPago(<?php echo $pago['id_pagos']; ?>)" class="btn btn-warning">
                                         <i class="fas fa-edit"></i> Editar
@@ -437,3 +446,4 @@ $pagos = $controller->obtenerPagos();
     </script>
 </body>
 </html>
+

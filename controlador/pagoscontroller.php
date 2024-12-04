@@ -12,6 +12,12 @@ class PagosController {
         return $this->modelo->obtenerPagos();
     }
 
+
+    public function obtenerNombreCliente($id_cliente) {
+        return $this->modelo->obtenerNombreCliente($id_cliente);
+    }
+
+
     public function obtenerPago($id) {
         return $this->modelo->obtenerPago($id);
     }

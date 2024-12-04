@@ -7,29 +7,27 @@ class Conexion {
     private $conn = null;
 
     public function getConnection() {
-        try {
-            $this->conn = new PDO("mysql:host={$this->host};dbname={$this->dbname}", $this->username, $this->password);
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $this->conn;
-        } catch (PDOException $exception) {
-            throw new Exception("Error de conexión: " . $exception->getMessage());
+        if ($this->conn === null) {
+            try {
+                $this->conn = new PDO("mysql:host={$this->host};dbname={$this->dbname};charset=utf8mb4", $this->username, $this->password);
+                $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            } catch (PDOException $exception) {
+                error_log("Error de conexión: " . $exception->getMessage());
+                throw new Exception("Error de conexión a la base de datos");
+            }
         }
+        return $this->conn;
     }
 
-    public function query($sql) {
-        if ($this->conn === null) {
-            throw new Exception("No se puede ejecutar la consulta: conexión no establecida.");
-        }
-
-        try {
-            return $this->conn->query($sql);
-        } catch (PDOException $exception) {
-            throw new Exception("Error al ejecutar la consulta: " . $exception->getMessage());
-        }
+    public function query($sql, $params = []) {
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt;
     }
 
     public function close() {
         $this->conn = null;
     }
 }
-?>
+
