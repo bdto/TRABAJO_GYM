@@ -55,10 +55,25 @@ class Pagos {
     public function obtenerPagos() {
         try {
             $query = "SELECT * FROM pagos ORDER BY id_pagos DESC";
-            $result = $this->conn->query($query);
-            return $result->fetchAll();
-        } catch (Exception $e) {
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
             error_log("Error al obtener pagos: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function obtenerPagosPorMes($month, $year) {
+        try {
+            $query = "SELECT * FROM pagos WHERE MONTH(fecha_pago) = :month AND YEAR(fecha_pago) = :year ORDER BY fecha_pago DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':month', $month, PDO::PARAM_INT);
+            $stmt->bindParam(':year', $year, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener pagos por mes: " . $e->getMessage());
             return [];
         }
     }
@@ -92,6 +107,45 @@ class Pagos {
         } catch (PDOException $e) {
             error_log("Error al obtener el pago: " . $e->getMessage());
             return false;
+        }
+    }
+
+    public function obtenerTotalRecaudado() {
+        try {
+            $query = "SELECT SUM(precio) as total FROM pagos";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log("Error al obtener el total recaudado: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function obtenerPagosMes() {
+        try {
+            $query = "SELECT COUNT(*) as total FROM pagos WHERE MONTH(fecha_pago) = MONTH(CURRENT_DATE()) AND YEAR(fecha_pago) = YEAR(CURRENT_DATE())";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log("Error al obtener los pagos del mes: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function obtenerPagosPendientes() {
+        try {
+            $query = "SELECT COUNT(*) as total FROM pagos WHERE estado = 'pendiente'";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log("Error al obtener los pagos pendientes: " . $e->getMessage());
+            return 0;
         }
     }
 }

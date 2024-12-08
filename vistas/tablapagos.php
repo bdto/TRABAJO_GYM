@@ -10,8 +10,12 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
-// Obtener pagos
-$pagos = $controller->obtenerPagos();
+// Obtener el mes y año actual si no se especifica
+$month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
+$year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+
+// Obtener pagos del mes seleccionado
+$pagos = $controller->obtenerPagosPorMes($month, $year);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -23,17 +27,17 @@ $pagos = $controller->obtenerPagos();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --primary-color: #1a202c;
-            --secondary-color: #db2777;
-            --accent-color: #f472b6;
-            --background-color: #f3f4f6;
-            --text-color: #1f2937;
+            --primary-color: #2c3e50;
+            --secondary-color: #e74c3c;
+            --accent-color: #3498db;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
             --card-background: #ffffff;
-            --border-color: #e5e7eb;
-            --hover-color: #f9fafb;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
+            --border-color: #bdc3c7;
+            --hover-color: #f5f6fa;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
         }
 
         * {
@@ -43,7 +47,7 @@ $pagos = $controller->obtenerPagos();
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Roboto', 'Arial', sans-serif;
             background-color: var(--background-color);
             color: var(--text-color);
             line-height: 1.6;
@@ -78,10 +82,11 @@ $pagos = $controller->obtenerPagos();
         }
 
         .logo img {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             transition: transform 0.3s ease;
+            border: 2px solid var(--accent-color);
         }
 
         .logo img:hover {
@@ -89,15 +94,16 @@ $pagos = $controller->obtenerPagos();
         }
 
         .logo h1 {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: bold;
             color: var(--accent-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
         nav ul {
             display: flex;
             list-style: none;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         nav a {
@@ -109,6 +115,7 @@ $pagos = $controller->obtenerPagos();
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-weight: 500;
         }
 
         nav a:hover {
@@ -124,7 +131,7 @@ $pagos = $controller->obtenerPagos();
             background-color: var(--card-background);
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 1.5rem;
+            padding: 2rem;
             margin-bottom: 2rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
@@ -135,13 +142,15 @@ $pagos = $controller->obtenerPagos();
         }
 
         .card-title {
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-weight: bold;
-            margin-bottom: 1rem;
-            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
         }
 
         .search-container {
@@ -163,8 +172,8 @@ $pagos = $controller->obtenerPagos();
 
         .search-input:focus {
             outline: none;
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 2px rgba(219, 39, 119, 0.2);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
 
         .btn {
@@ -179,6 +188,7 @@ $pagos = $controller->obtenerPagos();
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-weight: 500;
         }
 
         .btn:hover {
@@ -192,16 +202,16 @@ $pagos = $controller->obtenerPagos();
         }
 
         .btn-success:hover {
-            background-color: #059669;
+            background-color: #27ae60;
         }
 
         .btn-warning {
             background-color: var(--warning-color);
-            color: var(--primary-color);
+            color: var(--text-color);
         }
 
         .btn-warning:hover {
-            background-color: #d97706;
+            background-color: #f1c40f;
         }
 
         .table-container {
@@ -225,9 +235,9 @@ $pagos = $controller->obtenerPagos();
         }
 
         th {
-            background-color: var(--hover-color);
+            background-color: var(--primary-color);
             font-weight: bold;
-            color: var(--secondary-color);
+            color: #fff;
             position: sticky;
             top: 0;
             z-index: 10;
@@ -259,6 +269,38 @@ $pagos = $controller->obtenerPagos();
             transform: translateY(-2px);
         }
 
+        .month-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background-color: var(--hover-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .month-navigation button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: background-color 0.3s, transform 0.2s;
+            font-weight: 500;
+        }
+
+        .month-navigation button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .month-navigation span {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -276,6 +318,11 @@ $pagos = $controller->obtenerPagos();
 
             .search-input, .btn {
                 width: 100%;
+            }
+
+            .month-navigation {
+                flex-direction: column;
+                gap: 1rem;
             }
         }
     </style>
@@ -302,6 +349,11 @@ $pagos = $controller->obtenerPagos();
     <main class="container">
         <div class="card">
             <h2 class="card-title"><i class="fas fa-table"></i> Tabla de Pagos</h2>
+            <div class="month-navigation">
+                <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i> Mes Anterior</button>
+                <span id="currentMonth"></span>
+                <button onclick="changeMonth(1)">Mes Siguiente <i class="fas fa-chevron-right"></i></button>
+            </div>
             <div class="search-container">
                 <input type="text" id="filtro" class="search-input" placeholder="Buscar por tipo de subscripción...">
                 <button onclick="filtrarTabla()" class="btn"><i class="fas fa-search"></i> Buscar</button>
@@ -360,6 +412,27 @@ $pagos = $controller->obtenerPagos();
         const itemsPerPage = 10;
         let currentPage = 1;
         let filteredPagos = [];
+        let currentMonth = <?php echo $month; ?>;
+        let currentYear = <?php echo $year; ?>;
+
+        function updateMonthDisplay() {
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            document.getElementById('currentMonth').textContent = `${monthNames[currentMonth - 1]} ${currentYear}`;
+        }
+
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            } else if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            updateMonthDisplay();
+            window.location.href = `tablapagos.php?month=${currentMonth}&year=${currentYear}`;
+        }
 
         function filtrarTabla() {
             const filtro = document.getElementById('filtro').value.toLowerCase();
@@ -433,17 +506,17 @@ $pagos = $controller->obtenerPagos();
             let downloadLink = document.createElement("a");
             document.body.appendChild(downloadLink);
             downloadLink.href = url;
-            downloadLink.download = 'pagos_gym_tina.xls';
+            downloadLink.download = `pagos_gym_tina_${currentMonth}_${currentYear}.xls`;
             downloadLink.click();
             document.body.removeChild(downloadLink);
         }
 
         // Inicializar la tabla
         document.addEventListener('DOMContentLoaded', function() {
+            updateMonthDisplay();
             filteredPagos = Array.from(document.getElementById('tablaPagos').getElementsByTagName('tr')).slice(1);
             mostrarPagina(1);
         });
     </script>
 </body>
 </html>
-

@@ -12,11 +12,13 @@ class PagosController {
         return $this->modelo->obtenerPagos();
     }
 
+    public function obtenerPagosPorMes($month, $year) {
+        return $this->modelo->obtenerPagosPorMes($month, $year);
+    }
 
     public function obtenerNombreCliente($id_cliente) {
         return $this->modelo->obtenerNombreCliente($id_cliente);
     }
-
 
     public function obtenerPago($id) {
         return $this->modelo->obtenerPago($id);
@@ -69,7 +71,6 @@ class PagosController {
         ];
     }
 
-    // Changed from private to public
     public function respuestaJSON($success, $message, $data = null) {
         $response = [
             'success' => $success,
@@ -108,8 +109,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'obtenerEstadisticas') {
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $controller = new PagosController();
-    $estadisticas = $controller->obtenerEstadisticasPagos();
-    $controller->respuestaJSON(true, 'Estadísticas obtenidas con éxito.', $estadisticas);
+
+    if (isset($_GET['action'])) {
+        switch ($_GET['action']) {
+            case 'obtenerEstadisticas':
+                $estadisticas = $controller->obtenerEstadisticasPagos();
+                $controller->respuestaJSON(true, 'Estadísticas obtenidas con éxito.', $estadisticas);
+                break;
+            case 'obtenerPagosPorMes':
+                if (isset($_GET['month']) && isset($_GET['year'])) {
+                    $pagos = $controller->obtenerPagosPorMes($_GET['month'], $_GET['year']);
+                    $controller->respuestaJSON(true, 'Pagos obtenidos con éxito.', $pagos);
+                } else {
+                    $controller->respuestaJSON(false, 'Mes y año no proporcionados.');
+                }
+                break;
+            default:
+                $controller->respuestaJSON(false, 'Acción no válida.');
+        }
+    }
 }
