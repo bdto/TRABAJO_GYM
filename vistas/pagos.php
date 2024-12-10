@@ -19,6 +19,39 @@ $pagoToEdit = null;
 if ($isEditing && isset($_GET['id'])) {
     $pagoToEdit = $controller->obtenerPago($_GET['id']);
 }
+
+$mensaje = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'];
+    $datos = [
+        'id_cliente' => $_POST['id_cliente'],
+        'id_admin' => $_POST['id_admin'],
+        'tipo_subscripcion' => $_POST['tipo_subscripcion'],
+        'precio' => $_POST['precio'],
+        'duracion' => $_POST['duracion'],
+        'estado' => $_POST['estado'],
+        'fecha_pago' => $_POST['fecha_pago']
+    ];
+
+    if ($action === 'registrar') {
+        $resultado = $controller->registrarPago($datos);
+    } elseif ($action === 'actualizar') {
+        $id_pagos = $_POST['id_pagos'];
+        $resultado = $controller->actualizarPago($id_pagos, $datos);
+    }
+
+    if ($resultado['success']) {
+        $mensaje = $resultado['message'];
+        if ($action === 'actualizar') {
+            header("Location: tablapagos.php?mensaje=" . urlencode($mensaje));
+            exit();
+        }
+    } else {
+        $mensaje = "Error: " . $resultado['message'];
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -28,7 +61,7 @@ if ($isEditing && isset($_GET['id'])) {
     <title>Pagos - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<style>
+    <style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #db2777;
@@ -268,6 +301,12 @@ if ($isEditing && isset($_GET['id'])) {
             margin-top: 0.25rem;
         }
 
+        .success-message {
+            color: var(--success-color);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -309,13 +348,19 @@ if ($isEditing && isset($_GET['id'])) {
     </header>
 
     <main class="container">
+        <?php if (!empty($mensaje)): ?>
+            <div class="<?php echo strpos($mensaje, 'Error') !== false ? 'error-message' : 'success-message'; ?>">
+                <?php echo $mensaje; ?>
+            </div>
+        <?php endif; ?>
+
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-money-bill-wave fa-2x"></i>
                 <h2 class="card-title"><?php echo $isEditing ? 'Editar Pago' : 'Registrar Pago'; ?></h2>
             </div>
             <div class="card-content">
-                <form id="paymentForm">
+                <form id="paymentForm" method="POST" action="">
                     <input type="hidden" name="action" value="<?php echo $isEditing ? 'actualizar' : 'registrar'; ?>">
                     <?php if ($isEditing): ?>
                         <input type="hidden" name="id_pagos" value="<?php echo $pagoToEdit['id_pagos']; ?>">
@@ -405,9 +450,6 @@ if ($isEditing && isset($_GET['id'])) {
             const precioInput = document.getElementById('precio');
             const duracionInput = document.getElementById('duracion');
 
-            // Set the id_admin value from the session
-            document.getElementById('id_admin').value = '<?php echo $_SESSION['id_admin']; ?>';
-
             const subscriptionData = {
                 mensualidad: { precio: 60000, duracion: 30 },
                 rutina: { precio: 10000, duracion: 1 },
@@ -426,57 +468,8 @@ if ($isEditing && isset($_GET['id'])) {
                     duracionInput.value = '';
                 }
             });
-
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                const formData = new FormData(form);
-                const action = formData.get('action');
-                const url = '../controlador/pagoscontroller.php';
-
-                fetch(url, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        if (action === 'registrar') {
-                            form.reset();
-                            // Actualizar estadísticas
-                            actualizarEstadisticas();
-                        } else {
-                            window.location.href = 'tablapagos.php';
-                        }
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Ocurrió un error al procesar la solicitud. Por favor, inténtelo de nuevo.');
-                });
-            });
-
-            function actualizarEstadisticas() {
-                fetch('../controlador/pagoscontroller.php?action=obtenerEstadisticas')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('totalRecaudado').textContent = '$' + data.data.total_recaudado.toFixed(2);
-                        document.getElementById('pagosMes').textContent = data.data.pagos_mes;
-                        document.getElementById('pagosPendientes').textContent = data.data.pagos_pendientes;
-                    }
-                })
-                .catch(error => console.error('Error al actualizar estadísticas:', error));
-            }
         });
     </script>
 </body>
 </html>
+

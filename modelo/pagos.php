@@ -11,16 +11,17 @@ class Pagos {
 
     public function registrarPago($datos) {
         try {
-            $query = "INSERT INTO pagos (id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado) 
-                      VALUES (:id_cliente, :id_admin, :tipo_subscripcion, :precio, :duracion, :estado)";
+            $query = "INSERT INTO pagos (id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado, fecha_pago) 
+                      VALUES (:id_cliente, :id_admin, :tipo_subscripcion, :precio, :duracion, :estado, :fecha_pago)";
             $stmt = $this->conn->prepare($query);
             
             $stmt->bindParam(':id_cliente', $datos['id_cliente'], PDO::PARAM_INT);
             $stmt->bindParam(':id_admin', $datos['id_admin'], PDO::PARAM_INT);
             $stmt->bindParam(':tipo_subscripcion', $datos['tipo_subscripcion'], PDO::PARAM_STR);
             $stmt->bindParam(':precio', $datos['precio'], PDO::PARAM_STR);
-            $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_STR);
+            $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_INT);
             $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
+            $stmt->bindParam(':fecha_pago', $datos['fecha_pago'], PDO::PARAM_STR);
 
             $stmt->execute();
             return $this->conn->lastInsertId();
@@ -31,30 +32,40 @@ class Pagos {
     }
 
     public function actualizarPago($id, $datos) {
-        try {
-            $query = "UPDATE pagos SET id_cliente = :id_cliente, id_admin = :id_admin, 
-                      tipo_subscripcion = :tipo_subscripcion, precio = :precio, 
-                      duracion = :duracion, estado = :estado WHERE id_pagos = :id_pagos";
-            $stmt = $this->conn->prepare($query);
-            
-            $stmt->bindParam(':id_pagos', $id, PDO::PARAM_INT);
-            $stmt->bindParam(':id_cliente', $datos['id_cliente'], PDO::PARAM_INT);
-            $stmt->bindParam(':id_admin', $datos['id_admin'], PDO::PARAM_INT);
-            $stmt->bindParam(':tipo_subscripcion', $datos['tipo_subscripcion'], PDO::PARAM_STR);
-            $stmt->bindParam(':precio', $datos['precio'], PDO::PARAM_STR);
-            $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_STR);
-            $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
+    try {
+        $query = "UPDATE pagos SET id_cliente = :id_cliente, id_admin = :id_admin, 
+                  tipo_subscripcion = :tipo_subscripcion, precio = :precio, 
+                  duracion = :duracion, estado = :estado, fecha_pago = :fecha_pago 
+                  WHERE id_pagos = :id_pagos";
+        $stmt = $this->conn->prepare($query);
+        
+        $stmt->bindParam(':id_pagos', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':id_cliente', $datos['id_cliente'], PDO::PARAM_INT);
+        $stmt->bindParam(':id_admin', $datos['id_admin'], PDO::PARAM_INT);
+        $stmt->bindParam(':tipo_subscripcion', $datos['tipo_subscripcion'], PDO::PARAM_STR);
+        $stmt->bindParam(':precio', $datos['precio'], PDO::PARAM_STR);
+        $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_INT);
+        $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
+        $stmt->bindParam(':fecha_pago', $datos['fecha_pago'], PDO::PARAM_STR);
 
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("Error al actualizar el pago: " . $e->getMessage());
-            return false;
+        $result = $stmt->execute();
+        
+        if ($result) {
+            return ['success' => true, 'message' => 'Pago actualizado correctamente'];
+        } else {
+            $errorInfo = $stmt->errorInfo();
+            error_log("Error SQL al actualizar el pago: " . $errorInfo[2]);
+            return ['success' => false, 'message' => 'Error al actualizar el pago: ' . $errorInfo[2]];
         }
+    } catch (PDOException $e) {
+        error_log("Excepción al actualizar el pago: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error al actualizar el pago: ' . $e->getMessage()];
     }
+}
 
     public function obtenerPagos() {
         try {
-            $query = "SELECT * FROM pagos ORDER BY id_pagos DESC";
+            $query = "SELECT * FROM pagos ORDER BY fecha_pago DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -80,13 +91,13 @@ class Pagos {
 
     public function obtenerNombreCliente($id_cliente) {
         try {
-            $query = "SELECT nombre FROM usuarios WHERE id = :id_cliente";
+            $query = "SELECT CONCAT(nombre, ' ', apellido) AS nombre_completo FROM usuarios WHERE id_cliente = :id_cliente";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id_cliente', $id_cliente, PDO::PARAM_INT);
             $stmt->execute();
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($resultado) {
-                return $resultado['nombre'];
+                return $resultado['nombre_completo'];
             } else {
                 error_log("Cliente no encontrado para ID: " . $id_cliente);
                 return 'Cliente no encontrado';
@@ -149,3 +160,5 @@ class Pagos {
         }
     }
 }
+?>
+

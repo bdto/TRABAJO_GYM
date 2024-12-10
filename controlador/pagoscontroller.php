@@ -27,7 +27,7 @@ class PagosController {
     public function registrarPago($datos) {
         // Validación de datos
         if (empty($datos['id_cliente']) || empty($datos['id_admin']) || empty($datos['tipo_subscripcion']) || 
-            empty($datos['precio']) || empty($datos['duracion']) || empty($datos['estado'])) {
+            empty($datos['precio']) || empty($datos['duracion']) || empty($datos['estado']) || empty($datos['fecha_pago'])) {
             return $this->respuestaJSON(false, 'Todos los campos son requeridos.');
         }
 
@@ -42,7 +42,7 @@ class PagosController {
     public function actualizarPago($id, $datos) {
         // Validación de datos
         if (empty($id) || empty($datos['id_cliente']) || empty($datos['id_admin']) || empty($datos['tipo_subscripcion']) || 
-            empty($datos['precio']) || empty($datos['duracion']) || empty($datos['estado'])) {
+            empty($datos['precio']) || empty($datos['duracion']) || empty($datos['estado']) || empty($datos['fecha_pago'])) {
             return $this->respuestaJSON(false, 'Todos los campos son requeridos.');
         }
 
