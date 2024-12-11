@@ -21,6 +21,7 @@ if ($isEditing && isset($_GET['id'])) {
 }
 
 $mensaje = '';
+$accion = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'];
@@ -36,17 +37,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'registrar') {
         $resultado = $controller->registrarPago($datos);
+        $accion = 'registrado';
     } elseif ($action === 'actualizar') {
         $id_pagos = $_POST['id_pagos'];
         $resultado = $controller->actualizarPago($id_pagos, $datos);
+        $accion = 'actualizado';
     }
 
     if ($resultado['success']) {
         $mensaje = $resultado['message'];
-        if ($action === 'actualizar') {
-            header("Location: tablapagos.php?mensaje=" . urlencode($mensaje));
-            exit();
-        }
     } else {
         $mensaje = "Error: " . $resultado['message'];
     }
@@ -55,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -213,7 +213,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: var(--primary-color);
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 0.75rem;
             border: 2px solid var(--border-color);
@@ -222,7 +223,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: var(--transition);
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--secondary-color);
             box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2);
@@ -250,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         button:hover {
             background-color: var(--accent-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .stats-grid {
@@ -291,9 +293,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: var(--primary-color);
         }
 
-        .bg-blue { background-color: var(--secondary-color); color: #fff; }
-        .bg-green { background-color: var(--success-color); color: #fff; }
-        .bg-orange { background-color: var(--warning-color); color: #fff; }
+        .bg-blue {
+            background-color: var(--secondary-color);
+            color: #fff;
+        }
+
+        .bg-green {
+            background-color: var(--success-color);
+            color: #fff;
+        }
+
+        .bg-orange {
+            background-color: var(--warning-color);
+            color: #fff;
+        }
 
         .error-message {
             color: var(--danger-color);
@@ -305,6 +318,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: var(--success-color);
             font-size: 0.875rem;
             margin-top: 0.25rem;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .popup-content {
+            margin-bottom: 20px;
+        }
+
+        .popup-close {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
         }
 
         @media (max-width: 768px) {
@@ -328,6 +379,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -338,7 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <nav>
                     <ul>
-                    <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Inicio</a></li>
+                        <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Inicio</a></li>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
                         <li><a href="tablapagos.php"><i class="fas fa-table"></i> Tabla Pagos</a></li>
                     </ul>
@@ -348,12 +400,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </header>
 
     <main class="container">
-        <?php if (!empty($mensaje)): ?>
-            <div class="<?php echo strpos($mensaje, 'Error') !== false ? 'error-message' : 'success-message'; ?>">
-                <?php echo $mensaje; ?>
-            </div>
-        <?php endif; ?>
-
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-money-bill-wave fa-2x"></i>
@@ -395,9 +441,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="form-group">
                             <label for="estado">Estado:</label>
                             <select id="estado" name="estado" required>
-                                <option value="">Seleccionar</option>
-                                <option value="activo" <?php echo ($isEditing && $pagoToEdit['estado'] === 'activo') ? 'selected' : ''; ?>>Activo</option>
-                                <option value="inactivo" <?php echo ($isEditing && $pagoToEdit['estado'] === 'inactivo') ? 'selected' : ''; ?>>Inactivo</option>
+                                <option value="pendiente" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pendiente') ? 'selected' : ''; ?>>Pendiente</option>
+                                <option value="pagado" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pagado') ? 'selected' : ''; ?>>Pagado</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -443,6 +488,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup">
+        <div class="popup-content" id="popupMessage"></div>
+        <button class="popup-close" onclick="closePopup()">Cerrar</button>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('paymentForm');
@@ -451,10 +502,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const duracionInput = document.getElementById('duracion');
 
             const subscriptionData = {
-                mensualidad: { precio: 60000, duracion: 30 },
-                rutina: { precio: 10000, duracion: 1 },
-                semanal: { precio: 30000, duracion: 7 },
-                quincenal: { precio: 40000, duracion: 15 }
+                mensualidad: {
+                    precio: 60000,
+                    duracion: 30
+                },
+                rutina: {
+                    precio: 10000,
+                    duracion: 1 
+                },
+                semanal: {
+                    precio: 30000,
+                    duracion: 7
+                },
+                quincenal: {
+                    precio: 40000,
+                    duracion: 15
+                }
             };
 
             tipoSubscripcionSelect.addEventListener('change', function() {
@@ -468,8 +531,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     duracionInput.value = '';
                 }
             });
+
+            <?php if (!empty($mensaje)): ?>
+                showPopup("<?php echo $mensaje; ?>");
+            <?php endif; ?>
         });
+
+        function showPopup(message) {
+            document.getElementById('popupMessage').textContent = message;
+            document.getElementById('popup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
     </script>
 </body>
-</html>
 
+</html>
