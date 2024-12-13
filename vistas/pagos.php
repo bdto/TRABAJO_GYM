@@ -2,6 +2,16 @@
 session_start();
 require_once '../controlador/pagoscontroller.php';
 
+// Agregar encabezados CORS
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+// Función para registrar errores
+function logError($message) {
+    error_log(date('[Y-m-d H:i:s] ') . $message . "\n", 3, '../logs/error.log');
+}
+
 $controller = new PagosController();
 
 // Verificar si el usuario ha iniciado sesión
@@ -11,13 +21,22 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 // Obtener pagos para las estadísticas
-$estadisticas = $controller->obtenerEstadisticasPagos();
+try {
+    $estadisticas = $controller->obtenerEstadisticasPagos();
+} catch (Exception $e) {
+    logError('Error al obtener estadísticas: ' . $e->getMessage());
+    $estadisticas = ['total_recaudado' => 0, 'pagos_mes' => 0, 'pagos_pendientes' => 0];
+}
 
 // Verificar si estamos en modo de edición
 $isEditing = isset($_GET['editar']) && $_GET['editar'] === 'true';
 $pagoToEdit = null;
 if ($isEditing && isset($_GET['id'])) {
-    $pagoToEdit = $controller->obtenerPago($_GET['id']);
+    try {
+        $pagoToEdit = $controller->obtenerPago($_GET['id']);
+    } catch (Exception $e) {
+        logError('Error al obtener pago para editar: ' . $e->getMessage());
+    }
 }
 
 $mensaje = '';
@@ -35,20 +54,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'fecha_pago' => $_POST['fecha_pago']
     ];
 
-    if ($action === 'registrar') {
-        $resultado = $controller->registrarPago($datos);
-        $accion = 'registrado';
-    } elseif ($action === 'actualizar') {
-        $id_pagos = $_POST['id_pagos'];
-        $resultado = $controller->actualizarPago($id_pagos, $datos);
-        $accion = 'actualizado';
-    }
+    try {
+        if ($action === 'registrar') {
+            $resultado = $controller->registrarPago($datos);
+        } elseif ($action === 'actualizar') {
+            $id_pagos = $_POST['id_pagos'];
+            $resultado = $controller->actualizarPago($id_pagos, $datos);
+        }
 
-    if ($resultado['success']) {
-        $mensaje = $resultado['message'];
-    } else {
-        $mensaje = "Error: " . $resultado['message'];
+        if ($resultado['success']) {
+            // Redirect to tablapagos.php after successful operation
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => $resultado['message'],
+                'redirect' => 'tablapagos.php'
+            ]);
+        } else {
+            header('Content-Type: application/json');
+            echo json_encode($resultado);
+        }
+    } catch (Exception $e) {
+        logError('Error al procesar pago: ' . $e->getMessage());
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error interno del servidor: ' . $e->getMessage()
+        ]);
     }
+    exit;
 }
 
 ?>
@@ -406,7 +440,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h2 class="card-title"><?php echo $isEditing ? 'Editar Pago' : 'Registrar Pago'; ?></h2>
             </div>
             <div class="card-content">
-                <form id="paymentForm" method="POST" action="">
+                <form id="paymentForm" method="POST">
                     <input type="hidden" name="action" value="<?php echo $isEditing ? 'actualizar' : 'registrar'; ?>">
                     <?php if ($isEditing): ?>
                         <input type="hidden" name="id_pagos" value="<?php echo $pagoToEdit['id_pagos']; ?>">
@@ -494,60 +528,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button class="popup-close" onclick="closePopup()">Cerrar</button>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('paymentForm');
-            const tipoSubscripcionSelect = document.getElementById('tipo_subscripcion');
-            const precioInput = document.getElementById('precio');
-            const duracionInput = document.getElementById('duracion');
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('paymentForm');
+        const tipoSubscripcionSelect = document.getElementById('tipo_subscripcion');
+        const precioInput = document.getElementById('precio');
+        const duracionInput = document.getElementById('duracion');
 
-            const subscriptionData = {
-                mensualidad: {
-                    precio: 60000,
-                    duracion: 30
-                },
-                rutina: {
-                    precio: 10000,
-                    duracion: 1 
-                },
-                semanal: {
-                    precio: 30000,
-                    duracion: 7
-                },
-                quincenal: {
-                    precio: 40000,
-                    duracion: 15
-                }
-            };
+        const subscriptionData = {
+            mensualidad: {
+                precio: 60000,
+                duracion: 30
+            },
+            rutina: {
+                precio: 10000,
+                duracion: 1 
+            },
+            semanal: {
+                precio: 30000,
+                duracion: 7
+            },
+            quincenal: {
+                precio: 40000,
+                duracion: 15
+            }
+        };
 
-            tipoSubscripcionSelect.addEventListener('change', function() {
-                const selectedType = this.value;
-                const data = subscriptionData[selectedType];
-                if (data) {
-                    precioInput.value = data.precio;
-                    duracionInput.value = data.duracion;
-                } else {
-                    precioInput.value = '';
-                    duracionInput.value = '';
-                }
-            });
-
-            <?php if (!empty($mensaje)): ?>
-                showPopup("<?php echo $mensaje; ?>");
-            <?php endif; ?>
+        tipoSubscripcionSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            const data = subscriptionData[selectedType];
+            if (data) {
+                precioInput.value = data.precio;
+                duracionInput.value = data.duracion;
+            } else {
+                precioInput.value = '';
+                duracionInput.value = '';
+            }
         });
 
-        function showPopup(message) {
-            document.getElementById('popupMessage').textContent = message;
-            document.getElementById('popup').style.display = 'block';
-            document.getElementById('overlay').style.display = 'block';
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+    
+            const formData = new FormData(form);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showPopup(data.message);
+                    if (data.redirect) {
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 2000);
+                    } else {
+                        clearForm();
+                    }
+                } else {
+                    showPopup("Error: " + (data.message || "Ocurrió un error desconocido."));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showPopup("Ocurrió un error al procesar la solicitud: " + error.message);
+            });
+        });
+
+        function clearForm() {
+            form.reset();
+            document.getElementById('id_cliente').value = '';
+            document.getElementById('tipo_subscripcion').value = '';
+            document.getElementById('precio').value = '';
+            document.getElementById('duracion').value = '';
+            document.getElementById('estado').value = 'pendiente';
+            document.getElementById('fecha_pago').value = new Date().toISOString().split('T')[0];
         }
 
-        function closePopup() {
-            document.getElementById('popup').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
-        }
-    </script>
+        <?php if (!empty($mensaje)): ?>
+            showPopup("<?php echo $mensaje; ?>");
+        <?php endif; ?>
+    });
+
+    function showPopup(message) {
+        document.getElementById('popupMessage').textContent = message;
+        document.getElementById('popup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closePopup() {
+        document.getElementById('popup').style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+    }
+</script>
 </body>
 
 </html>
+

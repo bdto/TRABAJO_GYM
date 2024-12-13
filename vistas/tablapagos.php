@@ -16,6 +16,26 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
 // Obtener pagos del mes seleccionado
 $pagos = $controller->obtenerPagosPorMes($month, $year);
+
+// Si es una solicitud AJAX, devolver solo los datos de la tabla
+if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+    $html = '';
+    foreach ($pagos as $pago) {
+        $html .= '<tr>';
+        $html .= '<td>' . htmlspecialchars($pago['id_cliente']) . '</td>';
+        $html .= '<td>' . htmlspecialchars($controller->obtenerNombreCliente($pago['id_cliente'])) . '</td>';
+        $html .= '<td>' . htmlspecialchars($pago['id_admin']) . '</td>';
+        $html .= '<td>' . htmlspecialchars($pago['tipo_subscripcion']) . '</td>';
+        $html .= '<td>$' . number_format($pago['precio'], 2) . '</td>';
+        $html .= '<td>' . htmlspecialchars($pago['duracion']) . '</td>';
+        $html .= '<td>' . htmlspecialchars($pago['estado']) . '</td>';
+        $html .= '<td>' . htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))) . '</td>';
+        $html .= '<td><button onclick="editarPago(' . $pago['id_pagos'] . ')" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</button></td>';
+        $html .= '</tr>';
+    }
+    echo $html;
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -25,7 +45,7 @@ $pagos = $controller->obtenerPagosPorMes($month, $year);
     <title>Tabla de Pagos - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<style>
+    <style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #db2777;
@@ -174,11 +194,14 @@ $pagos = $controller->obtenerPagosPorMes($month, $year);
             background-color: var(--secondary-color);
             color: #fff;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
             cursor: pointer;
             transition: var(--transition);
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .month-navigation button:hover {
@@ -237,6 +260,9 @@ $pagos = $controller->obtenerPagosPorMes($month, $year);
 
         .table-container {
             overflow-x: auto;
+            background-color: var(--card-background);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
         }
 
         table {
@@ -255,6 +281,9 @@ $pagos = $controller->obtenerPagosPorMes($month, $year);
             background-color: var(--primary-color);
             color: #fff;
             font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         tr:nth-child(even) {
@@ -263,6 +292,15 @@ $pagos = $controller->obtenerPagosPorMes($month, $year);
 
         tr:hover {
             background-color: var(--border-color);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: #fff;
+        }
+
+        .btn-warning:hover {
+            background-color: #dd6b20;
         }
 
         .pagination {
@@ -419,7 +457,7 @@ $pagos = $controller->obtenerPagosPorMes($month, $year);
                 currentYear--;
             }
             updateMonthDisplay();
-            window.location.href = `tablapagos.php?month=${currentMonth}&year=${currentYear}`;
+            refreshTableData();
         }
 
         function filtrarTabla() {
@@ -497,6 +535,21 @@ $pagos = $controller->obtenerPagosPorMes($month, $year);
             downloadLink.download = `pagos_gym_tina_${currentMonth}_${currentYear}.xls`;
             downloadLink.click();
             document.body.removeChild(downloadLink);
+        }
+
+        function refreshTableData() {
+            fetch(`tablapagos.php?month=${currentMonth}&year=${currentYear}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const tbody = document.querySelector('#tablaPagos tbody');
+                tbody.innerHTML = html;
+                filtrarTabla();
+            })
+            .catch(error => console.error('Error refreshing table data:', error));
         }
 
         // Inicializar la tabla
