@@ -19,7 +19,7 @@ if ($conn->connect_error) {
 }
 
 // Consulta a la tabla usuarios
-$sql = "SELECT id_cliente, nombre, apellido, telefono, genero, f_registro, estado FROM usuarios";
+$sql = "SELECT id_cliente, nombre, apellido, telefono, genero, f_registro, estado, email, direccion FROM usuarios";
 $result = $conn->query($sql);
 $usuarios = [];
 
@@ -354,6 +354,8 @@ $conn->close();
                                 <th>Género</th>
                                 <th>Fecha Registro</th>
                                 <th>Estado</th>
+                                <th>Email</th>
+                                <th>Dirección</th>
                                 <th>Acción</th>
                             </tr>
                         </thead>
@@ -367,6 +369,8 @@ $conn->close();
                                     <td><?= htmlspecialchars($usuario['genero']) ?></td>
                                     <td><?= htmlspecialchars($usuario['f_registro']) ?></td>
                                     <td><?= htmlspecialchars($usuario['estado']) ?></td>
+                                    <td><?= htmlspecialchars($usuario['email']) ?></td>
+                                    <td><?= htmlspecialchars($usuario['direccion']) ?></td>
                                     <td><button class="edit-btn" onclick="editUser(<?= $usuario['id_cliente'] ?>)"><i class="fas fa-edit"></i> Editar</button></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -398,7 +402,7 @@ $conn->close();
                 const cells = row.getElementsByTagName('td');
                 let shouldShow = false;
 
-                for (let j = 0; j < cells.length; j++) {
+                for (let j = 0; j < cells.length -1; j++) {
                     const cell = cells[j];
                     if (cell.textContent.toLowerCase().indexOf(filter) > -1) {
                         shouldShow = true;
@@ -471,3 +475,4 @@ $conn->close();
     </script>
 </body>
 </html>
+

@@ -36,6 +36,11 @@ class AdminController {
             return ['success' => false, 'message' => 'Por favor, complete todos los campos.'];
         }
 
+        // Check if the admin ID already exists
+        if ($this->admin->obtenerPorId($datos['id'])) {
+            return ['success' => false, 'message' => 'El ID de administrador ya está en uso.'];
+        }
+
         $this->admin->id = $datos['id'];
         $this->admin->usuario = $datos['usuario'];
         $this->admin->password = password_hash($datos['password'], PASSWORD_DEFAULT);
@@ -116,7 +121,10 @@ if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
                 break;
         }
 
-        echo json_encode($response);
+        // Redirect back to sigup.php with the response
+        $redirectUrl = '../vistas/sigup.php?' . http_build_query($response);
+        header('Location: ' . $redirectUrl);
+        exit;
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $action = $_GET['action'] ?? '';
         $response = ['success' => false, 'message' => 'Acción no válida'];

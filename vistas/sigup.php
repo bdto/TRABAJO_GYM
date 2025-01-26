@@ -1,34 +1,28 @@
 <?php
 session_start();
-require_once __DIR__ . '/../controlador/pagoscontroller.php';
+require_once __DIR__ . '/../controlador/admincontroller.php';
 
 $message = '';
 $adminIdError = '';
-$controller = new PagosController();
+$controller = new AdminController();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'];
-    // Check if the admin ID already exists
-    if ($controller->adminIdExists($id)) {
-        $adminIdError = "ID NO DISPONIBLE";
+    $usuario = $_POST['usuario'];
+    $plain_password = $_POST['password'];
+
+    $datos = [
+        'id' => $id,
+        'usuario' => $usuario,
+        'password' => $plain_password
+    ];
+
+    $result = $controller->registrarAdmin($datos);
+
+    if ($result['success']) {
+        $message = "<p class='success'>{$result['message']} <a href='login.php'>Iniciar sesión</a></p>";
     } else {
-        // Existing registration logic
-        $usuario = $_POST['usuario'];
-        $plain_password = $_POST['password'];
-
-        $datos = [
-            'id' => $id,
-            'usuario' => $usuario,
-            'password' => $plain_password
-        ];
-
-        $result = $controller->registrarPago($datos);
-
-        if ($result['success']) {
-            $message = "<p class='success'>{$result['message']} <a href='login.php'>Iniciar sesión</a></p>";
-        } else {
-            $message = "<p class='error'>{$result['message']}</p>";
-        }
+        $message = "<p class='error'>{$result['message']}</p>";
     }
 }
 ?>
@@ -355,7 +349,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo $message;
             }
             ?>
-            <form method="POST" action="procesar_registro.php">
+            <form method="POST" action="../controlador/admincontroller.php">
                 <input type="hidden" name="action" value="registrar">
                 <div class="form-group">
                     <label for="id"><i class="fas fa-id-card"></i> ID de Administrador</label>
@@ -407,4 +401,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
-

@@ -378,6 +378,14 @@ if ($isEditing && isset($_GET['id'])) {
                                 <option value="inactivo" <?php echo ($isEditing && $userToEdit['estado'] === 'inactivo') ? 'selected' : ''; ?>>Inactivo</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" required value="<?php echo $isEditing ? htmlspecialchars($userToEdit['email']) : ''; ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="direccion">Dirección:</label>
+                            <input type="text" id="direccion" name="direccion" required value="<?php echo $isEditing ? htmlspecialchars($userToEdit['direccion']) : ''; ?>">
+                        </div>
                     </div>
                     <button type="submit" id="submitBtn">
                         <i class="fas fa-save"></i> <?php echo $isEditing ? 'Actualizar Usuario' : 'Registrar Usuario'; ?>
@@ -474,3 +482,4 @@ if ($isEditing && isset($_GET['id'])) {
 </body>
 
 </html>
+

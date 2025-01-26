@@ -8,7 +8,7 @@ class UsuariosController {
     }
 
     public function obtenerUsuarios() {
-        $query = "SELECT * FROM usuarios"; // Cambiado 'clientes' por 'usuarios'
+        $query = "SELECT * FROM usuarios";
         try {
             $stmt = $this->db->prepare($query);
             $stmt->execute();
@@ -19,7 +19,7 @@ class UsuariosController {
     }
 
     public function obtenerUsuario($id) {
-        $query = "SELECT * FROM usuarios WHERE id_cliente = :id_cliente"; // Cambiado 'clientes' por 'usuarios'
+        $query = "SELECT * FROM usuarios WHERE id_cliente = :id_cliente";
         try {
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_cliente', $id, PDO::PARAM_INT);
@@ -30,8 +30,8 @@ class UsuariosController {
         }
     }
 
-    public function registrarUsuario($nombre, $apellido, $telefono, $genero, $f_registro, $estado) {
-        $query = "INSERT INTO usuarios (nombre, apellido, telefono, genero, f_registro, estado) VALUES (:nombre, :apellido, :telefono, :genero, :f_registro, :estado)";
+    public function registrarUsuario($nombre, $apellido, $telefono, $genero, $f_registro, $estado, $email, $direccion) {
+        $query = "INSERT INTO usuarios (nombre, apellido, telefono, genero, f_registro, estado, email, direccion) VALUES (:nombre, :apellido, :telefono, :genero, :f_registro, :estado, :email, :direccion)";
         try {
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':nombre', $nombre);
@@ -40,6 +40,8 @@ class UsuariosController {
             $stmt->bindParam(':genero', $genero);
             $stmt->bindParam(':f_registro', $f_registro);
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':direccion', $direccion);
 
             if ($stmt->execute()) {
                 return json_encode(['success' => true, 'message' => 'Usuario registrado con éxito']);
@@ -51,8 +53,8 @@ class UsuariosController {
         }
     }
 
-    public function actualizarUsuario($id, $nombre, $apellido, $telefono, $genero, $estado) {
-        $query = "UPDATE usuarios SET nombre = :nombre, apellido = :apellido, telefono = :telefono, genero = :genero, estado = :estado WHERE id_cliente = :id_cliente"; // Cambiado 'clientes' por 'usuarios'
+    public function actualizarUsuario($id, $nombre, $apellido, $telefono, $genero, $estado, $email, $direccion) {
+        $query = "UPDATE usuarios SET nombre = :nombre, apellido = :apellido, telefono = :telefono, genero = :genero, estado = :estado, email = :email, direccion = :direccion WHERE id_cliente = :id_cliente";
         try {
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_cliente', $id, PDO::PARAM_INT);
@@ -61,6 +63,8 @@ class UsuariosController {
             $stmt->bindParam(':telefono', $telefono);
             $stmt->bindParam(':genero', $genero);
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':direccion', $direccion);
 
             if ($stmt->execute()) {
                 return json_encode(['success' => true, 'message' => 'Usuario actualizado con éxito']);
@@ -85,7 +89,9 @@ class UsuariosController {
                             $_POST['telefono'],
                             $_POST['genero'],
                             $_POST['f_registro'],
-                            $_POST['estado']
+                            $_POST['estado'],
+                            $_POST['email'],
+                            $_POST['direccion']
                         );
                         break;
                     case 'actualizar':
@@ -95,7 +101,9 @@ class UsuariosController {
                             $_POST['apellido'],
                             $_POST['telefono'],
                             $_POST['genero'],
-                            $_POST['estado']
+                            $_POST['estado'],
+                            $_POST['email'],
+                            $_POST['direccion']
                         );
                         break;
                     default:
@@ -113,3 +121,4 @@ if (basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"])) {
     $controller = new UsuariosController();
     $controller->procesarSolicitud();
 }
+
