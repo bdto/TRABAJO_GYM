@@ -52,8 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'precio' => $_POST['precio'],
         'duracion' => $_POST['duracion'],
         'estado' => $_POST['estado'],
-        'fecha_pago' => $_POST['fecha_pago']
+        'fecha_pago' => $_POST['fecha_pago'],
+        'medio_pago' => $_POST['medio_pago']
     ];
+
+    error_log('Medio de pago recibido: ' . $_POST['medio_pago']);
 
     try {
         if ($action === 'registrar') {
@@ -464,6 +467,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <option value="rutina" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'rutina') ? 'selected' : ''; ?>>Rutina</option>
                                 <option value="semanal" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'semanal') ? 'selected' : ''; ?>>Semanal</option>
                                 <option value="quincenal" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'quincenal') ? 'selected' : ''; ?>>Quincenal</option>
+                                <option value="duo_combo_x1" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'duo_combo_x1') ? 'selected' : ''; ?>>Duo Combo X1</option>
+                                <option value="duo_combo_x2" <?php echo ($isEditing && $pagoToEdit['tipo_subscripcion'] === 'duo_combo_x2') ? 'selected' : ''; ?>>Duo Combo X2</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -479,6 +484,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <select id="estado" name="estado" required>
                                 <option value="pendiente" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pendiente') ? 'selected' : ''; ?>>Pendiente</option>
                                 <option value="pagado" <?php echo ($isEditing && $pagoToEdit['estado'] === 'pagado') ? 'selected' : ''; ?>>Pagado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="medio_pago">Medio de Pago:</label>
+                            <select id="medio_pago" name="medio_pago" required>
+                                <option value="">Seleccionar</option>
+                                <option value="Efectivo" <?php echo ($isEditing && $pagoToEdit['medio_pago'] === 'Efectivo') ? 'selected' : ''; ?>>Efectivo</option>
+                                <option value="Nequi" <?php echo ($isEditing && $pagoToEdit['medio_pago'] === 'Nequi') ? 'selected' : ''; ?>>Nequi</option>
+                                <option value="Bancolombia" <?php echo ($isEditing && $pagoToEdit['medio_pago'] === 'Bancolombia') ? 'selected' : ''; ?>>Bancolombia</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -544,7 +558,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             },
             rutina: {
                 precio: 10000,
-                duracion: 1 
+                duracion: 1
             },
             semanal: {
                 precio: 30000,
@@ -553,6 +567,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             quincenal: {
                 precio: 40000,
                 duracion: 15
+            },
+            duo_combo_x1: {
+                precio: 100.000,
+                duracion: 60 // 2 months
+            },
+            duo_combo_x2: {
+                precio: 100.000,
+                duracion: 30 // 1 month
             }
         };
 
@@ -615,6 +637,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             document.getElementById('duracion').value = '';
             document.getElementById('estado').value = 'pendiente';
             document.getElementById('fecha_pago').value = new Date().toISOString().split('T')[0];
+            document.getElementById('medio_pago').value = '';
         }
 
         <?php if (!empty($mensaje)): ?>

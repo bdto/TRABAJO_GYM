@@ -37,6 +37,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         $html .= '<td>' . htmlspecialchars($pago['duracion']) . '</td>';
         $html .= '<td>' . htmlspecialchars($pago['estado'] ?? 'N/A') . '</td>';
         $html .= '<td>' . htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))) . '</td>';
+        $html .= '<td>' . htmlspecialchars($pago['medio_pago'] ?? 'N/A') . '</td>';
         $html .= '<td><button onclick="editarPago(' . $pago['id_pagos'] . ')" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</button></td>';
         $html .= '</tr>';
     }
@@ -406,6 +407,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                                 <th>Duración</th>
                                 <th>Estado</th>
                                 <th>Fecha de Pago</th>
+                                <th>Medio de Pago</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -420,6 +422,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                                     <td><?php echo htmlspecialchars($pago['duracion']); ?></td>
                                     <td><?php echo htmlspecialchars($pago['estado'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))); ?></td>
+                                    <td><?php echo htmlspecialchars($pago['medio_pago'] ?? 'N/A'); ?></td>
                                     <td>
                                         <button onclick="editarPago(<?php echo $pago['id_pagos']; ?>)" class="btn btn-warning">
                                             <i class="fas fa-edit"></i> Editar
@@ -568,6 +571,4 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
     </script>
 </body>
 </html>
-
-
 

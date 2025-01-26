@@ -33,7 +33,11 @@ CREATE TABLE IF NOT EXISTS pagos (
     FOREIGN KEY (id_admin) REFERENCES admins(ID_Admin) ON DELETE RESTRICT
 );
 
+-- Añadir la columna MEDIO_PAGO a la tabla pagos
+ALTER TABLE pagos ADD COLUMN MEDIO_PAGO VARCHAR(50);
+
 -- Añadir índices para mejorar el rendimiento
 CREATE INDEX idx_usuarios_estado ON usuarios(estado);
 CREATE INDEX idx_pagos_fecha ON pagos(fecha_pago);
 CREATE INDEX idx_pagos_cliente_admin ON pagos(id_cliente, id_admin);
+
