@@ -6,8 +6,8 @@ $controller = new PagosController();
 
 // Verificar si el usuario ha iniciado sesión
 if (!isset($_SESSION['usuario'])) {
-  header("Location: login.php");
-  exit();
+    header("Location: login.php");
+    exit();
 }
 
 // Obtener el mes y año actual si no se especifica
@@ -16,6 +16,13 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
 // Obtener pagos del mes seleccionado
 $pagos = $controller->obtenerPagosPorMes($month, $year);
+
+// Debugging
+error_log("Mes: $month, Año: $year");
+error_log("Número de pagos obtenidos: " . count($pagos));
+foreach ($pagos as $index => $pago) {
+    error_log("Pago $index - ID: {$pago['id_pagos']}, Estado: " . ($pago['estado'] ?? 'N/A'));
+}
 
 // Si es una solicitud AJAX, devolver solo los datos de la tabla
 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -28,7 +35,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         $html .= '<td>' . htmlspecialchars($pago['tipo_subscripcion']) . '</td>';
         $html .= '<td>$' . number_format($pago['precio'], 2) . '</td>';
         $html .= '<td>' . htmlspecialchars($pago['duracion']) . '</td>';
-        $html .= '<td>' . htmlspecialchars($pago['estado']) . '</td>';
+        $html .= '<td>' . htmlspecialchars($pago['estado'] ?? 'N/A') . '</td>';
         $html .= '<td>' . htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))) . '</td>';
         $html .= '<td><button onclick="editarPago(' . $pago['id_pagos'] . ')" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</button></td>';
         $html .= '</tr>';
@@ -36,6 +43,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
     echo $html;
     exit;
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -45,7 +53,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
     <title>Tabla de Pagos - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
+<style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #db2777;
@@ -405,17 +413,12 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                             <?php foreach ($pagos as $pago): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($pago['id_cliente']); ?></td>
-                                    <td>
-                                        <?php
-                                        $nombreCliente = $controller->obtenerNombreCliente($pago['id_cliente']);
-                                        echo htmlspecialchars($nombreCliente !== 'Error al obtener el nombre' ? $nombreCliente : 'Nombre no disponible');
-                                        ?>
-                                    </td>
+                                    <td><?php echo htmlspecialchars($controller->obtenerNombreCliente($pago['id_cliente'])); ?></td>
                                     <td><?php echo htmlspecialchars($pago['id_admin']); ?></td>
                                     <td><?php echo htmlspecialchars($pago['tipo_subscripcion']); ?></td>
                                     <td>$<?php echo number_format($pago['precio'], 2); ?></td>
                                     <td><?php echo htmlspecialchars($pago['duracion']); ?></td>
-                                    <td><?php echo htmlspecialchars($pago['estado']); ?></td>
+                                    <td><?php echo htmlspecialchars($pago['estado'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))); ?></td>
                                     <td>
                                         <button onclick="editarPago(<?php echo $pago['id_pagos']; ?>)" class="btn btn-warning">
@@ -548,8 +551,12 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                 const tbody = document.querySelector('#tablaPagos tbody');
                 tbody.innerHTML = html;
                 filtrarTabla();
+                console.log('Tabla actualizada correctamente');
             })
-            .catch(error => console.error('Error refreshing table data:', error));
+            .catch(error => {
+                console.error('Error refreshing table data:', error);
+                alert('Error al actualizar la tabla. Por favor, revise la consola para más detalles.');
+            });
         }
 
         // Inicializar la tabla
@@ -561,4 +568,6 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
     </script>
 </body>
 </html>
+
+
 

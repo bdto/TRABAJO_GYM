@@ -1,27 +1,34 @@
 <?php
 session_start();
-require_once __DIR__ . '/../controlador/admincontroller.php';
+require_once __DIR__ . '/../controlador/pagoscontroller.php';
 
 $message = '';
-$controller = new AdminController();
+$adminIdError = '';
+$controller = new PagosController();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'];
-    $usuario = $_POST['usuario'];
-    $plain_password = $_POST['password'];
-
-    $datos = [
-        'id' => $id,
-        'usuario' => $usuario,
-        'password' => $plain_password
-    ];
-
-    $result = $controller->registrarAdmin($datos);
-
-    if ($result['success']) {
-        $message = "<p class='success'>{$result['message']} <a href='login.php'>Iniciar sesión</a></p>";
+    // Check if the admin ID already exists
+    if ($controller->adminIdExists($id)) {
+        $adminIdError = "ID NO DISPONIBLE";
     } else {
-        $message = "<p class='error'>{$result['message']}</p>";
+        // Existing registration logic
+        $usuario = $_POST['usuario'];
+        $plain_password = $_POST['password'];
+
+        $datos = [
+            'id' => $id,
+            'usuario' => $usuario,
+            'password' => $plain_password
+        ];
+
+        $result = $controller->registrarPago($datos);
+
+        if ($result['success']) {
+            $message = "<p class='success'>{$result['message']} <a href='login.php'>Iniciar sesión</a></p>";
+        } else {
+            $message = "<p class='error'>{$result['message']}</p>";
+        }
     }
 }
 ?>
@@ -348,7 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo $message;
             }
             ?>
-            <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+            <form method="POST" action="procesar_registro.php">
                 <input type="hidden" name="action" value="registrar">
                 <div class="form-group">
                     <label for="id"><i class="fas fa-id-card"></i> ID de Administrador</label>
@@ -387,7 +394,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const errorMessage = document.createElement('p');
             errorMessage.className = 'error-message';
             idInput.parentNode.appendChild(errorMessage);
-            
+    
             idInput.addEventListener('input', function() {
                 if (!/^\d*$/.test(this.value)) {
                     errorMessage.textContent = 'Dato inválido para introducir';
@@ -400,3 +407,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
+

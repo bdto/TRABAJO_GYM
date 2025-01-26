@@ -255,6 +255,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transform: translateZ(20px);
         }
 
+        .links.center {
+            justify-content: center;
+        }
+
         .links a {
             color: var(--accent-color);
             font-size: 0.9em;
@@ -326,8 +330,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="submit" class="submit-btn">Ingresar</button>
                 <?php endif; ?>
             </form>
-            <div class="links">
-                <a href="../vistas/sigup.php">Registrarse</a>
+            <div class="links <?php echo !$show_login_form ? 'center' : ''; ?>">
+                <?php if ($show_login_form): ?>
+                    <a href="../vistas/sigup.php">Registrarse</a>
+                <?php endif; ?>
                 <a href="../index.php">Inicio</a> 
             </div>
         </div>
@@ -342,3 +348,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
+

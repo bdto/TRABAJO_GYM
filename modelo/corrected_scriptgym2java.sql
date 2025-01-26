@@ -1,4 +1,3 @@
-
 -- Creación de la tabla admins
 CREATE TABLE IF NOT EXISTS admins (
     ID_Admin INT AUTO_INCREMENT PRIMARY KEY,
@@ -15,7 +14,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     telefono VARCHAR(15) NOT NULL,
     genero ENUM('masculino', 'femenino', 'otro') NOT NULL,
     f_registro DATE NOT NULL,
-    estado ENUM('activo', 'inactivo') NOT NULL
+    estado ENUM('activo', 'inactivo') NOT NULL,
+    direccion VARCHAR(255),
+    email VARCHAR(100)
 );
 
 -- Creación de la tabla pagos
@@ -26,7 +27,7 @@ CREATE TABLE IF NOT EXISTS pagos (
     tipo_subscripcion VARCHAR(50) NOT NULL,
     precio DECIMAL(10, 2) NOT NULL,
     duracion INT NOT NULL,
-    estado ENUM('activo', 'inactivo') NOT NULL,
+    estado ENUM('pagado', 'pendiente') NOT NULL,
     fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_cliente) REFERENCES usuarios(id_cliente) ON DELETE CASCADE,
     FOREIGN KEY (id_admin) REFERENCES admins(ID_Admin) ON DELETE RESTRICT

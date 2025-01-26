@@ -43,6 +43,7 @@ $mensaje = '';
 $accion = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    error_log('POST data recibida en pagos.php: ' . print_r($_POST, true));
     $action = $_POST['action'];
     $datos = [
         'id_cliente' => $_POST['id_cliente'],
@@ -62,8 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resultado = $controller->actualizarPago($id_pagos, $datos);
         }
 
+        error_log('Resultado de la operación: ' . print_r($resultado, true));
+
         if ($resultado['success']) {
-            // Redirect to tablapagos.php after successful operation
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => true,
@@ -95,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Pagos - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+<style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #db2777;
@@ -571,6 +573,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
             const formData = new FormData(form);
             
+            // Log form data before sending
+            console.log('Form data before sending:', Object.fromEntries(formData));
+
             fetch(window.location.href, {
                 method: 'POST',
                 body: formData
@@ -582,6 +587,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return response.json();
             })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
                     showPopup(data.message);
                     if (data.redirect) {
