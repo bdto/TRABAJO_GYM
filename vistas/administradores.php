@@ -377,12 +377,11 @@
                 <nav id="main-nav">
                     <ul>
                         <li class="download-container">
-                            <a href="../imagenes/MANUAL%20DE%20USUARIO-GYM%20MANAGER.pdf" class="btn-download" download="Manual_Usuario_Gym_Manager.pdf">
-                                <i class="fas fa-download"></i> Descargar Manual
-                            </a>
+                            
                         </li>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> USUARIOS</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> PAGOS</a></li>
+                        <li><a href="estadisticas.php"><i class="fas fa-chart-bar"></i> CONTABILIDAD</a></li>
                         <li><button id="logoutBtn" class="logout-btn">
                                 <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
                             </button></li>

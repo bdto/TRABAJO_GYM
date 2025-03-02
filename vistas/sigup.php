@@ -20,10 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = $controller->registrarAdmin($datos);
 
     if ($result['success']) {
-        $message = "<p class='success'>{$result['message']} <a href='login.php'>Iniciar sesión</a></p>";
+        $_SESSION['message'] = "<p class='success'>{$result['message']} <a href='login.php'>Iniciar sesión</a></p>";
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit();
     } else {
         $message = "<p class='error'>{$result['message']}</p>";
     }
+}
+
+if (isset($_SESSION['message'])) {
+    $message = $_SESSION['message'];
+    unset($_SESSION['message']);
 }
 ?>
 <!DOCTYPE html>
@@ -349,8 +356,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo $message;
             }
             ?>
-            <form method="POST" action="../controlador/admincontroller.php">
-                <input type="hidden" name="action" value="registrar">
+            <form method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
                 <div class="form-group">
                     <label for="id"><i class="fas fa-id-card"></i> ID de Administrador</label>
                     <input type="text" id="id" name="id" required value="<?php echo isset($_POST['id']) ? htmlspecialchars($_POST['id']) : ''; ?>">

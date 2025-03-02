@@ -10,40 +10,41 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
+function obtenerNombreMesEspanol($numeroMes) {
+    $meses = [
+        1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+        5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+        9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+    ];
+    return $meses[$numeroMes] ?? '';
+}
+
 // Obtener el mes y año actual si no se especifica
 $month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
 $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
+// Manejar la navegación de meses
+if (isset($_GET['nav_month'])) {
+    if ($_GET['nav_month'] === 'prev') {
+        $month--;
+        if ($month < 1) {
+            $month = 12;
+            $year--;
+        }
+    } elseif ($_GET['nav_month'] === 'next') {
+        $month++;
+        if ($month > 12) {
+            $month = 1;
+            $year++;
+        }
+    }
+}
+
 // Obtener pagos del mes seleccionado
 $pagos = $controller->obtenerPagosPorMes($month, $year);
 
-// Debugging
-error_log("Mes: $month, Año: $year");
-error_log("Número de pagos obtenidos: " . count($pagos));
-foreach ($pagos as $index => $pago) {
-    error_log("Pago $index - ID: {$pago['id_pagos']}, Estado: " . ($pago['estado'] ?? 'N/A'));
-}
-
-// Si es una solicitud AJAX, devolver solo los datos de la tabla
-if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-    $html = '';
-    foreach ($pagos as $pago) {
-        $html .= '<tr>';
-        $html .= '<td>' . htmlspecialchars($pago['id_cliente']) . '</td>';
-        $html .= '<td>' . htmlspecialchars($controller->obtenerNombreCliente($pago['id_cliente'])) . '</td>';
-        $html .= '<td>' . htmlspecialchars($pago['id_admin']) . '</td>';
-        $html .= '<td>' . htmlspecialchars($pago['tipo_subscripcion']) . '</td>';
-        $html .= '<td>$' . number_format($pago['precio'], 2) . '</td>';
-        $html .= '<td>' . htmlspecialchars($pago['duracion']) . '</td>';
-        $html .= '<td>' . htmlspecialchars($pago['estado'] ?? 'N/A') . '</td>';
-        $html .= '<td>' . htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))) . '</td>';
-        $html .= '<td>' . htmlspecialchars($pago['medio_pago'] ?? 'N/A') . '</td>';
-        $html .= '<td><button onclick="editarPago(' . $pago['id_pagos'] . ')" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</button></td>';
-        $html .= '</tr>';
-    }
-    echo $html;
-    exit;
-}
+// Manejar la búsqueda
+$filtro = isset($_GET['filtro']) ? $_GET['filtro'] : '';
 
 ?>
 <!DOCTYPE html>
@@ -54,7 +55,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
     <title>Tabla de Pagos - Fitness Gym-Tina</title>
     <link rel="icon" href="../imagenes/WhatsApp Image 2024-10-19 at 9.12.07 AM.jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<style>
+    <style>
         :root {
             --primary-color: #1a202c;
             --secondary-color: #db2777;
@@ -84,7 +85,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1500px;
             margin: 0 auto;
             padding: 0 1rem;
         }
@@ -199,7 +200,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             border-radius: 0.5rem;
         }
 
-        .month-navigation button {
+        .month-navigation a {
             background-color: var(--secondary-color);
             color: #fff;
             border: none;
@@ -211,9 +212,10 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            text-decoration: none;
         }
 
-        .month-navigation button:hover {
+        .month-navigation a:hover {
             background-color: var(--accent-color);
             transform: translateY(-2px);
         }
@@ -268,6 +270,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         }
 
         .table-container {
+            max-width: 100%;
             overflow-x: auto;
             background-color: var(--card-background);
             border-radius: 0.5rem;
@@ -275,6 +278,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         }
 
         table {
+            min-width: 1200px;
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
@@ -312,25 +316,14 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             background-color: #dd6b20;
         }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .pagination button {
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border-color);
-            background-color: var(--card-background);
-            cursor: pointer;
-            transition: var(--transition);
+        .cliente-adicional {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
-        }
-
-        .pagination button:hover, .pagination button.active {
-            background-color: var(--secondary-color);
-            color: #fff;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
         }
 
         @media (max-width: 768px) {
@@ -372,6 +365,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                         <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Inicio</a></li>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
+                        <li><a href="estadisticas.php"><i class="fas fa-chart-bar"></i> Contabilidad</a></li>
                     </ul>
                 </nav>
             </div>
@@ -386,15 +380,17 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             </div>
             <div class="card-content">
                 <div class="month-navigation">
-                    <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i> Mes Anterior</button>
-                    <span id="currentMonth"></span>
-                    <button onclick="changeMonth(1)">Mes Siguiente <i class="fas fa-chevron-right"></i></button>
+                    <a href="?nav_month=prev&month=<?php echo $month; ?>&year=<?php echo $year; ?>&filtro=<?php echo urlencode($filtro); ?>" class="btn"><i class="fas fa-chevron-left"></i> Mes Anterior</a>
+                    <span id="currentMonth"><?php echo obtenerNombreMesEspanol($month) . ' ' . $year; ?></span>
+                    <a href="?nav_month=next&month=<?php echo $month; ?>&year=<?php echo $year; ?>&filtro=<?php echo urlencode($filtro); ?>" class="btn">Mes Siguiente <i class="fas fa-chevron-right"></i></a>
                 </div>
-                <div class="search-container">
-                    <input type="text" id="filtro" class="search-input" placeholder="Buscar por tipo de subscripción...">
-                    <button onclick="filtrarTabla()" class="btn"><i class="fas fa-search"></i> Buscar</button>
-                    <button onclick="exportarExcel()" class="btn btn-success"><i class="fas fa-file-excel"></i> Exportar a Excel</button>
-                </div>
+                <form method="get" class="search-container">
+                    <input type="hidden" name="month" value="<?php echo $month; ?>">
+                    <input type="hidden" name="year" value="<?php echo $year; ?>">
+                    <input type="text" id="filtro" name="filtro" class="search-input" placeholder="Buscar por tipo de subscripción..." value="<?php echo htmlspecialchars($filtro); ?>">
+                    <button type="submit" class="btn"><i class="fas fa-search"></i> Buscar</button>
+                    <button type="button" onclick="exportarExcel()" class="btn btn-success"><i class="fas fa-file-excel"></i> Exportar a Excel</button>
+                </form>
                 <div class="table-container">
                     <table id="tablaPagos">
                         <thead>
@@ -408,166 +404,63 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                                 <th>Estado</th>
                                 <th>Fecha de Pago</th>
                                 <th>Medio de Pago</th>
+                                <th>Cliente Adicional</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($pagos as $pago): ?>
+                            <?php foreach ($pagos as $pago): 
+                                if (empty($filtro) || stripos($pago['tipo_subscripcion'] ?? '', $filtro) !== false):
+                            ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($pago['id_cliente']); ?></td>
-                                    <td><?php echo htmlspecialchars($controller->obtenerNombreCliente($pago['id_cliente'])); ?></td>
-                                    <td><?php echo htmlspecialchars($pago['id_admin']); ?></td>
-                                    <td><?php echo htmlspecialchars($pago['tipo_subscripcion']); ?></td>
-                                    <td>$<?php echo number_format($pago['precio'], 2); ?></td>
-                                    <td><?php echo htmlspecialchars($pago['duracion']); ?></td>
+                                    <td><?php echo htmlspecialchars($pago['id_cliente'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($pago['nombre_cliente'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($pago['id_admin'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($pago['tipo_subscripcion'] ?? 'N/A'); ?></td>
+                                    <td>$<?php echo number_format($pago['precio'] ?? 0, 2); ?></td>
+                                    <td><?php echo htmlspecialchars($pago['duracion'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($pago['estado'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($pago['fecha_pago']))); ?></td>
+                                    <td><?php echo htmlspecialchars(isset($pago['fecha_pago']) ? date('Y-m-d', strtotime($pago['fecha_pago'])) : 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($pago['medio_pago'] ?? 'N/A'); ?></td>
                                     <td>
-                                        <button onclick="editarPago(<?php echo $pago['id_pagos']; ?>)" class="btn btn-warning">
+                                        <?php if (!empty($pago['id_cliente_adicional'])): ?>
+                                            <span class="cliente-adicional">
+                                                <?php echo htmlspecialchars($pago['nombre_cliente_adicional'] ?? 'N/A') . ' ' . htmlspecialchars($pago['apellido_cliente_adicional'] ?? ''); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            -
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <a href="pagos.php?editar=true&id=<?php echo htmlspecialchars($pago['id_pagos'] ?? ''); ?>&month=<?php echo $month; ?>&year=<?php echo $year; ?>" class="btn btn-warning">
                                             <i class="fas fa-edit"></i> Editar
-                                        </button>
+                                        </a>
                                     </td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php 
+                                endif;
+                            endforeach; 
+                            ?>
                         </tbody>
                     </table>
-                </div>
-                <div id="pagination" class="pagination">
-                    <!-- Pagination will be added here by JavaScript -->
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const itemsPerPage = 10;
-        let currentPage = 1;
-        let filteredPagos = [];
-        let currentMonth = <?php echo $month; ?>;
-        let currentYear = <?php echo $year; ?>;
-
-        function updateMonthDisplay() {
-            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            document.getElementById('currentMonth').textContent = `${monthNames[currentMonth - 1]} ${currentYear}`;
-        }
-
-        function changeMonth(delta) {
-            currentMonth += delta;
-            if (currentMonth > 12) {
-                currentMonth = 1;
-                currentYear++;
-            } else if (currentMonth < 1) {
-                currentMonth = 12;
-                currentYear--;
-            }
-            updateMonthDisplay();
-            refreshTableData();
-        }
-
-        function filtrarTabla() {
-            const filtro = document.getElementById('filtro').value.toLowerCase();
-            const tabla = document.getElementById('tablaPagos');
-            const filas = tabla.getElementsByTagName('tr');
-
-            filteredPagos = [];
-
-            for (let i = 1; i < filas.length; i++) {
-                const fila = filas[i];
-                const celdas = fila.getElementsByTagName('td');
-                let mostrar = false;
-
-                for (let j = 0; j < celdas.length; j++) {
-                    const texto = celdas[j].textContent.toLowerCase();
-                    if (texto.indexOf(filtro) > -1) {
-                        mostrar = true;
-                        break;
-                    }
-                }
-
-                if (mostrar) {
-                    filteredPagos.push(fila);
-                }
-            }
-
-            mostrarPagina(1);
-        }
-
-        function mostrarPagina(pagina) {
-            const tabla = document.getElementById('tablaPagos');
-            const filas = tabla.getElementsByTagName('tr');
-            const inicio = (pagina - 1) * itemsPerPage;
-            const fin = inicio + itemsPerPage;
-
-            for (let i = 1; i < filas.length; i++) {
-                filas[i].style.display = 'none';
-            }
-
-            for (let i = inicio; i < fin && i < filteredPagos.length; i++) {
-                filteredPagos[i].style.display = '';
-            }
-
-            actualizarPaginacion(pagina);
-        }
-
-        function actualizarPaginacion(paginaActual) {
-            const totalPaginas = Math.ceil(filteredPagos.length / itemsPerPage);
-            const paginacion = document.getElementById('pagination');
-            paginacion.innerHTML = '';
-
-            for (let i = 1; i <= totalPaginas; i++) {
-                const boton = document.createElement('button');
-                boton.textContent = i;
-                boton.onclick = function() { mostrarPagina(i); };
-                if (i === paginaActual) {
-                    boton.classList.add('active');
-                }
-                paginacion.appendChild(boton);
-            }
-        }
-
-        function editarPago(id) {
-            window.location.href = `pagos.php?editar=true&id=${id}`;
-        }
-
-        function exportarExcel() {
-            let tabla = document.getElementById('tablaPagos');
-            let html = tabla.outerHTML;
-            let url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
-            let downloadLink = document.createElement("a");
-            document.body.appendChild(downloadLink);
-            downloadLink.href = url;
-            downloadLink.download = `pagos_gym_tina_${currentMonth}_${currentYear}.xls`;
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-        }
-
-        function refreshTableData() {
-            fetch(`tablapagos.php?month=${currentMonth}&year=${currentYear}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.text())
-            .then(html => {
-                const tbody = document.querySelector('#tablaPagos tbody');
-                tbody.innerHTML = html;
-                filtrarTabla();
-                console.log('Tabla actualizada correctamente');
-            })
-            .catch(error => {
-                console.error('Error refreshing table data:', error);
-                alert('Error al actualizar la tabla. Por favor, revise la consola para más detalles.');
-            });
-        }
-
-        // Inicializar la tabla
-        document.addEventListener('DOMContentLoaded', function() {
-            updateMonthDisplay();
-            filteredPagos = Array.from(document.getElementById('tablaPagos').getElementsByTagName('tr')).slice(1);
-            mostrarPagina(1);
-        });
+    function exportarExcel() {
+        let tabla = document.getElementById('tablaPagos');
+        
+        let html = tabla.outerHTML;
+        let url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+        let downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        downloadLink.href = url;
+        downloadLink.download = 'pagos_gym_tina_<?php echo $month ?>_<?php echo $year ?>.xls';
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
     </script>
 </body>
 </html>

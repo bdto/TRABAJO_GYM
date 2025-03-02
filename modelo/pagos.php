@@ -3,6 +3,7 @@ require_once 'conexion.php';
 
 class Pagos {
     private $conn;
+    private $lastError;
 
     public function __construct() {
         $conexion = new Conexion();
@@ -11,19 +12,21 @@ class Pagos {
 
     public function obtenerPagosPorMes($month, $year) {
         try {
-            $query = "SELECT id_pagos, id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado, fecha_pago 
-                      FROM pagos 
-                      WHERE MONTH(fecha_pago) = :month AND YEAR(fecha_pago) = :year 
-                      ORDER BY fecha_pago DESC";
+            $query = "SELECT p.id_pagos, p.id_cliente, p.id_admin, p.tipo_subscripcion, p.precio, p.duracion, 
+                             p.estado, p.fecha_pago, p.medio_pago, p.id_cliente_adicional,
+                             u1.nombre AS nombre_cliente, u1.apellido AS apellido_cliente,
+                             u2.nombre AS nombre_cliente_adicional, u2.apellido AS apellido_cliente_adicional
+                      FROM pagos p
+                      LEFT JOIN usuarios u1 ON p.id_cliente = u1.id_cliente
+                      LEFT JOIN usuarios u2 ON p.id_cliente_adicional = u2.id_cliente
+                      WHERE MONTH(p.fecha_pago) = :month AND YEAR(p.fecha_pago) = :year 
+                      ORDER BY p.fecha_pago DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':month', $month, PDO::PARAM_INT);
             $stmt->bindParam(':year', $year, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             error_log("Pagos obtenidos para $month/$year: " . count($result));
-            foreach ($result as $pago) {
-                error_log("Pago ID: {$pago['id_pagos']}, Estado: " . ($pago['estado'] ?? 'N/A'));
-            }
             return $result;
         } catch (PDOException $e) {
             error_log("Error al obtener pagos por mes: " . $e->getMessage());
@@ -50,11 +53,41 @@ class Pagos {
         }
     }
 
+    public function obtenerInfoCliente($id_cliente) {
+        try {
+            $query = "SELECT id_cliente, nombre, apellido, email FROM usuarios WHERE id_cliente = :id_cliente";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id_cliente', $id_cliente, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener información del cliente: " . $e->getMessage());
+            return null;
+        }
+    }
+
     public function registrarPago($datos) {
         try {
-            error_log("Datos recibidos en registrarPago: " . print_r($datos, true));
-            $query = "INSERT INTO pagos (id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado, fecha_pago) 
-                      VALUES (:id_cliente, :id_admin, :tipo_subscripcion, :precio, :duracion, :estado, :fecha_pago)";
+            // Start a transaction
+            $this->conn->beginTransaction();
+
+            // Check if id_cliente exists
+            if (!$this->clienteExists($datos['id_cliente'])) {
+                throw new Exception("El cliente principal no existe.");
+            }
+
+            // Check if id_cliente_adicional exists (if provided)
+            if (!empty($datos['id_cliente_adicional'])) {
+                if (!$this->clienteExists($datos['id_cliente_adicional'])) {
+                    throw new Exception("El cliente adicional no existe.");
+                }
+            } else {
+                // Set id_cliente_adicional to NULL if not provided
+                $datos['id_cliente_adicional'] = null;
+            }
+
+            $query = "INSERT INTO pagos (id_cliente, id_admin, tipo_subscripcion, precio, duracion, estado, fecha_pago, medio_pago, id_cliente_adicional) 
+                      VALUES (:id_cliente, :id_admin, :tipo_subscripcion, :precio, :duracion, :estado, :fecha_pago, :medio_pago, :id_cliente_adicional)";
             $stmt = $this->conn->prepare($query);
             
             $stmt->bindParam(':id_cliente', $datos['id_cliente'], PDO::PARAM_INT);
@@ -64,13 +97,22 @@ class Pagos {
             $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_INT);
             $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
             $stmt->bindParam(':fecha_pago', $datos['fecha_pago'], PDO::PARAM_STR);
+            $stmt->bindParam(':medio_pago', $datos['medio_pago'], PDO::PARAM_STR);
+            $stmt->bindParam(':id_cliente_adicional', $datos['id_cliente_adicional'], PDO::PARAM_INT);
 
             $stmt->execute();
             $lastInsertId = $this->conn->lastInsertId();
+
+            // Commit the transaction
+            $this->conn->commit();
+
             error_log("Pago registrado con éxito. ID: " . $lastInsertId);
             return $lastInsertId;
-        } catch (PDOException $e) {
-            error_log("Error al registrar el pago: " . $e->getMessage());
+        } catch (Exception $e) {
+            // Rollback the transaction on error
+            $this->conn->rollBack();
+            $this->lastError = $e->getMessage();
+            error_log("Error al registrar el pago: " . $this->lastError);
             return false;
         }
     }
@@ -79,7 +121,8 @@ class Pagos {
         try {
             $query = "UPDATE pagos SET id_cliente = :id_cliente, id_admin = :id_admin, 
                       tipo_subscripcion = :tipo_subscripcion, precio = :precio, 
-                      duracion = :duracion, estado = :estado, fecha_pago = :fecha_pago 
+                      duracion = :duracion, estado = :estado, fecha_pago = :fecha_pago, 
+                      medio_pago = :medio_pago, id_cliente_adicional = :id_cliente_adicional 
                       WHERE id_pagos = :id_pagos";
             $stmt = $this->conn->prepare($query);
             
@@ -91,6 +134,8 @@ class Pagos {
             $stmt->bindParam(':duracion', $datos['duracion'], PDO::PARAM_INT);
             $stmt->bindParam(':estado', $datos['estado'], PDO::PARAM_STR);
             $stmt->bindParam(':fecha_pago', $datos['fecha_pago'], PDO::PARAM_STR);
+            $stmt->bindParam(':medio_pago', $datos['medio_pago'], PDO::PARAM_STR);
+            $stmt->bindParam(':id_cliente_adicional', $datos['id_cliente_adicional'], PDO::PARAM_INT);
 
             $result = $stmt->execute();
             
@@ -109,7 +154,12 @@ class Pagos {
 
     public function obtenerPago($id) {
         try {
-            $query = "SELECT * FROM pagos WHERE id_pagos = :id_pagos";
+            $query = "SELECT p.*, u1.nombre AS nombre_cliente, u1.apellido AS apellido_cliente,
+                             u2.nombre AS nombre_cliente_adicional, u2.apellido AS apellido_cliente_adicional
+                      FROM pagos p
+                      LEFT JOIN usuarios u1 ON p.id_cliente = u1.id_cliente
+                      LEFT JOIN usuarios u2 ON p.id_cliente_adicional = u2.id_cliente
+                      WHERE p.id_pagos = :id_pagos";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id_pagos', $id, PDO::PARAM_INT);
             $stmt->execute();
@@ -122,7 +172,7 @@ class Pagos {
 
     public function obtenerTotalRecaudado() {
         try {
-            $query = "SELECT SUM(precio) as total FROM pagos";
+            $query = "SELECT SUM(precio) as total FROM pagos WHERE estado = 'pagado'";
             $stmt = $this->conn->prepare($query);
             $stmt->execute();
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -159,6 +209,34 @@ class Pagos {
         }
     }
 
+    public function buscarPagos($termino) {
+        try {
+            $query = "SELECT p.*, u1.nombre AS nombre_cliente, u1.apellido AS apellido_cliente,
+                             u2.nombre AS nombre_cliente_adicional, u2.apellido AS apellido_cliente_adicional
+                      FROM pagos p
+                      LEFT JOIN usuarios u1 ON p.id_cliente = u1.id_cliente
+                      LEFT JOIN usuarios u2 ON p.id_cliente_adicional = u2.id_cliente
+                      WHERE p.id_cliente LIKE :termino OR 
+                            p.tipo_subscripcion LIKE :termino OR 
+                            p.estado LIKE :termino OR 
+                            p.medio_pago LIKE :termino OR 
+                            p.fecha_pago LIKE :termino OR
+                            u1.nombre LIKE :termino OR
+                            u1.apellido LIKE :termino OR
+                            u2.nombre LIKE :termino OR
+                            u2.apellido LIKE :termino";
+            $stmt = $this->conn->prepare($query);
+            $terminoBusqueda = "%$termino%";
+            $stmt->bindParam(':termino', $terminoBusqueda, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error en buscarPagos: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function adminIdExists($id) {
         try {
             $query = "SELECT COUNT(*) FROM admins WHERE ID_Admin = :id";
@@ -169,6 +247,53 @@ class Pagos {
             return $count > 0;
         } catch (PDOException $e) {
             error_log("Error al verificar si existe el ID de admin: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function obtenerEstadisticasPorMes($mes, $anio) {
+        try {
+            $query = "SELECT 
+                        COALESCE(SUM(CASE WHEN estado = 'pagado' THEN precio ELSE 0 END), 0) as total_recaudado,
+                        COUNT(*) as pagos_mes,
+                        COALESCE(SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END), 0) as pagos_pendientes
+                      FROM pagos 
+                      WHERE MONTH(fecha_pago) = :mes AND YEAR(fecha_pago) = :anio";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            error_log("Modelo - Query ejecutada: " . $query);
+            error_log("Modelo - Parámetros: Mes=$mes, Año=$anio");
+            error_log("Modelo - Resultado: " . print_r($result, true));
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error al obtener estadísticas por mes: " . $e->getMessage());
+            return [
+                'total_recaudado' => 0,
+                'pagos_mes' => 0,
+                'pagos_pendientes' => 0
+            ];
+        }
+    }
+
+    public function getLastError() {
+        return $this->lastError;
+    }
+
+    public function clienteExists($id_cliente) {
+        try {
+            $query = "SELECT COUNT(*) FROM usuarios WHERE id_cliente = :id_cliente";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id_cliente', $id_cliente, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchColumn() > 0;
+        } catch (PDOException $e) {
+            $this->lastError = $e->getMessage();
+            error_log("Error al verificar si existe el cliente: " . $this->lastError);
             return false;
         }
     }

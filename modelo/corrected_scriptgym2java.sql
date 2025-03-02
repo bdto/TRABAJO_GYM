@@ -29,15 +29,16 @@ CREATE TABLE IF NOT EXISTS pagos (
     duracion INT NOT NULL,
     estado ENUM('pagado', 'pendiente') NOT NULL,
     fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    medio_pago VARCHAR(50) NOT NULL,
+    id_cliente_adicional INT,
     FOREIGN KEY (id_cliente) REFERENCES usuarios(id_cliente) ON DELETE CASCADE,
-    FOREIGN KEY (id_admin) REFERENCES admins(ID_Admin) ON DELETE RESTRICT
+    FOREIGN KEY (id_admin) REFERENCES admins(ID_Admin) ON DELETE RESTRICT,
+    FOREIGN KEY (id_cliente_adicional) REFERENCES usuarios(id_cliente) ON DELETE SET NULL
 );
-
--- Añadir la columna MEDIO_PAGO a la tabla pagos
-ALTER TABLE pagos ADD COLUMN MEDIO_PAGO VARCHAR(50);
 
 -- Añadir índices para mejorar el rendimiento
 CREATE INDEX idx_usuarios_estado ON usuarios(estado);
 CREATE INDEX idx_pagos_fecha ON pagos(fecha_pago);
 CREATE INDEX idx_pagos_cliente_admin ON pagos(id_cliente, id_admin);
-
+CREATE INDEX idx_pagos_tipo_subscripcion ON pagos(tipo_subscripcion);
+CREATE INDEX idx_pagos_estado ON pagos(estado);

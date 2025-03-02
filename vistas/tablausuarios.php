@@ -326,6 +326,7 @@ $conn->close();
                         <li><a href="administradores.php"><i class="fas fa-home"></i> Inicio</a></li>
                         <li><a href="usuarios.php"><i class="fas fa-users"></i> Usuarios</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
+                        <li><a href="estadisticas.php"><i class="fas fa-chart-bar"></i> Contabilidad</a></li>
                     </ul>
                 </nav>
             </div>

@@ -324,6 +324,7 @@ if ($isEditing && isset($_GET['id'])) {
                         <li><a href="administradores.php"><i class="fas fa-user-shield"></i> Inicio</a></li>
                         <li><a href="pagos.php"><i class="fas fa-credit-card"></i> Pagos</a></li>
                         <li><a href="tablausuarios.php"><i class="fas fa-table"></i> Tabla Usuarios</a></li>
+                        <li><a href="estadisticas.php"><i class="fas fa-chart-bar"></i> Contabilidad</a></li>
                     </ul>
                 </nav>
             </div>
