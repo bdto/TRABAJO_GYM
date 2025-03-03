@@ -68,21 +68,17 @@ class Pagos {
 
     public function registrarPago($datos) {
         try {
-            // Start a transaction
             $this->conn->beginTransaction();
 
-            // Check if id_cliente exists
             if (!$this->clienteExists($datos['id_cliente'])) {
                 throw new Exception("El cliente principal no existe.");
             }
 
-            // Check if id_cliente_adicional exists (if provided)
             if (!empty($datos['id_cliente_adicional'])) {
                 if (!$this->clienteExists($datos['id_cliente_adicional'])) {
                     throw new Exception("El cliente adicional no existe.");
                 }
             } else {
-                // Set id_cliente_adicional to NULL if not provided
                 $datos['id_cliente_adicional'] = null;
             }
 
@@ -103,13 +99,11 @@ class Pagos {
             $stmt->execute();
             $lastInsertId = $this->conn->lastInsertId();
 
-            // Commit the transaction
             $this->conn->commit();
 
             error_log("Pago registrado con éxito. ID: " . $lastInsertId);
             return $lastInsertId;
         } catch (Exception $e) {
-            // Rollback the transaction on error
             $this->conn->rollBack();
             $this->lastError = $e->getMessage();
             error_log("Error al registrar el pago: " . $this->lastError);

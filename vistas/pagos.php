@@ -430,38 +430,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('paymentForm');
             const tipoSubscripcionSelect = document.getElementById('tipo_subscripcion');
+            const precioInput = document.getElementById('precio');
+            const duracionInput = document.getElementById('duracion');
             const clienteAdicionalSection = document.getElementById('cliente_adicional_section');
             const idClienteAdicionalInput = document.getElementById('id_cliente_adicional');
             const clienteInfoDiv = document.getElementById('cliente_info');
+            const verificarClienteBtn = document.getElementById('verificar_cliente');
 
             const subscriptionData = {
-                mensualidad: {
-                    precio: 60000,
-                    duracion: 30
-                },
-                rutina: {
-                    precio: 10000,
-                    duracion: 1
-                },
-                semanal: {
-                    precio: 30000,
-                    duracion: 7
-                },
-                quincenal: {
-                    precio: 40000,
-                    duracion: 15
-                },
-                duo_combo_x1: {
-                    precio: 100000,
-                    duracion: 60
-                },
-                duo_combo_x2: {
-                    precio: 100000,
-                    duracion: 30
-                }
+                mensualidad: { precio: 60000, duracion: 30 },
+                rutina: { precio: 10000, duracion: 1 },
+                semanal: { precio: 30000, duracion: 7 },
+                quincenal: { precio: 40000, duracion: 15 },
+                duo_combo_x1: { precio: 100000, duracion: 60 },
+                duo_combo_x2: { precio: 100000, duracion: 30 }
             };
 
-            // Mostrar/ocultar sección de cliente adicional según el tipo de suscripción
             tipoSubscripcionSelect.addEventListener('change', function() {
                 const selectedType = this.value;
                 const data = subscriptionData[selectedType];
@@ -474,7 +458,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     duracionInput.value = '';
                 }
                 
-                // Mostrar/ocultar sección de cliente adicional
                 if (selectedType === 'duo_combo_x2') {
                     clienteAdicionalSection.classList.remove('hidden');
                 } else {
@@ -485,7 +468,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
 
-            // Verificar cliente adicional
             verificarClienteBtn.addEventListener('click', function() {
                 const idClienteAdicional = idClienteAdicionalInput.value.trim();
                 
@@ -495,7 +477,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     return;
                 }
                 
-                // Realizar petición AJAX para verificar el cliente
                 fetch(`verificar_cliente.php?id=${idClienteAdicional}`)
                     .then(response => response.json())
                     .then(data => {
@@ -518,7 +499,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     });
             });
 
-            // Validación del formulario
             form.addEventListener('submit', function(event) {
                 const tipoSubscripcion = tipoSubscripcionSelect.value;
                 
@@ -531,7 +511,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         idClienteAdicionalInput.focus();
                     }
                 } else {
-                    // Limpiar el campo de cliente adicional si no es duo_combo_x2
                     idClienteAdicionalInput.value = '';
                 }
             });

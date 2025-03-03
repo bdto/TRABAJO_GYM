@@ -27,6 +27,11 @@ class PagosController {
             return ['success' => false, 'message' => 'Datos de pago inválidos'];
         }
 
+        // Si el tipo de suscripción no es duo_combo_x2, asegurarse de que id_cliente_adicional sea null
+        if ($datos['tipo_subscripcion'] !== 'duo_combo_x2') {
+            $datos['id_cliente_adicional'] = null;
+        }
+
         $resultado = $this->modelo->actualizarPago($id_pagos, $datos);
         return $resultado;
     }
@@ -116,7 +121,7 @@ class PagosController {
                 return false;
             }
         } else {
-            // Para otros tipos de suscripción, asegurarse de que id_cliente_adicional esté vacío
+            // Para otros tipos de suscripción, asegurarse de que id_cliente_adicional sea null
             $datos['id_cliente_adicional'] = null;
         }
 
